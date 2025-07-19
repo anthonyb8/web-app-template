@@ -16,8 +16,8 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PRODUCTION_KEY_PRIVATE }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.PRODUCTION_KEY_PRIVATE }}" > ~/.ssh/github_actions_deploy
+          chmod 600 ~/.ssh/github_actions_deploy
 
       - name: Add server to known_hosts
         run: |
@@ -27,7 +27,7 @@ jobs:
       - name: SSH and pull latest code
         run: |
           SERVER_IP=${{ secrets.PRODUCTION_IP }}
-          ssh -i ~/.ssh/id_rsa admin@$SERVER_IP -p 818 << 'EOF'
+          ssh -i ~/.ssh/github_actions_deploy admin@$SERVER_IP -p 818 << 'EOF'
             cd /test_server
             git pull origin main
           EOF
