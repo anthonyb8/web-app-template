@@ -21,8 +21,8 @@ jobs:
 
       - name: Add server to known_hosts
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.KNOWN_HOSTS_RSA }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p 818 ${{ secrets.PRODUCTION_IP }} >> ~/.ssh/known_hosts
+
 
       - name: SSH and pull latest code
         run: |
