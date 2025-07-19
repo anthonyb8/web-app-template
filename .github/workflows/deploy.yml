@@ -16,27 +16,25 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PRODUCTION_KEY_PRIVATE }}" > ~/.ssh/github_actions_deploy
+          echo "$PRIVATE_KEY" > ~/.ssh/github_actions_deploy
           chmod 600 ~/.ssh/github_actions_deploy
-          #cat ~/.ssh/github_actions_deploy
-
+        env:
+          PRIVATE_KEY: ${{ secrets.PRODUCTION_KEY_PRIVATE }} 
 
       - name: Add SSH host key to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p 818 $PRODUCTION_IP >> ~/.ssh/known_hosts
-          # ss /h-keyscan -p 818 70.24.107.57 >> ~/.ssh/known_hosts
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
-          # ssh-keyscan -p 818 ${{ secrets.PRODUCTION_IP }} >> ~/.ssh/known_hosts
-          # cat ~/.ssh/known_hosts
-      #
-      # - name: SSH and pull latest code
-      #   run: |
-      #     SERVER_IP=${{ secrets.PRODUCTION_IP }}
-      #     ssh -i ~/.ssh/github_actions_deploy admin@$SERVER_IP -p 818 << 'EOF'
-      #       cd /test_server
-      #       git pull origin main
-      #     EOF
+
+      - name: SSH and pull latest code
+        run: |
+          ssh -i ~/.ssh/github_actions_deploy admin@$PRODUCTION_IP -p 818 << 'EOF'
+            cd /test_server
+            git pull origin main
+          EOF
+        env:
+          PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
 
 
