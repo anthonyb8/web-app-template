@@ -24,17 +24,20 @@ jobs:
       - name: Add SSH host key to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p 818 $PRODUCTION_IP >> ~/.ssh/known_hosts
+          ssh-keyscan -p $PRODUCTION_PORT $PRODUCTION_IP >> ~/.ssh/known_hosts
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
+          PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
 
       - name: SSH and pull latest code
         run: |
-          ssh -i ~/.ssh/github_actions_deploy admin@$PRODUCTION_IP -p 818 << 'EOF'
+          ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
             cd $HOME/test_server
             git pull origin main
           EOF
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
+          PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
+          PRODUCTION_USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
 
 
