@@ -26,7 +26,7 @@ jobs:
 
       - name: SSH and pull latest code
         run: |
-          ssh -i ~/.ssh/id_rsa admin@192.168.2.191 -p 818 << 'EOF'
+          ssh -i ~/.ssh/id_rsa admin@${{ secrets.PRODUCTION_IP }} -p 818 << 'EOF'
             cd /test_server
             git pull origin main
           EOF
