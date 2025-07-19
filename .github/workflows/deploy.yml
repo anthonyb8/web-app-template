@@ -34,6 +34,7 @@ jobs:
           ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
             cd $HOME/test_server
             git pull origin main
+            chmod +x ./scripts/deploy.sh 
             # ./scripts/deploy.sh
           EOF
         env:
