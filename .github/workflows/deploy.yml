@@ -1,9 +1,9 @@
-name: Deploy to Server
+name: Deploy to Production 
 
 on:
   push:
     branches:
-      - main  # or your deploy branch
+      - main 
 
 jobs:
   deploy:
@@ -34,6 +34,7 @@ jobs:
           ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
             cd $HOME/test_server
             git pull origin main
+            # ./scripts/deploy.sh
           EOF
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}

@@ -6,7 +6,7 @@ function App() {
 
   const fetchMessage = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/hello");
+      const response = await axios.get("/api/hello");
       console.log(response);
       console.log("recieved response");
       setMessage(response.data.msg);

@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 
-@app.get("/api/hello")
+@app.get("/hello")
 def read_root():
     print("Helllo")
     return {"msg": "HelloWorld2"}
