@@ -18,18 +18,20 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.PRODUCTION_KEY_PRIVATE }}" > ~/.ssh/github_actions_deploy
           chmod 600 ~/.ssh/github_actions_deploy
+          #cat ~/.ssh/github_actions_deploy
 
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.KNOWN_HOSTS_RSA }}" >> ~/.ssh/known_hosts
-
-      - name: SSH and pull latest code
-        run: |
-          SERVER_IP=${{ secrets.PRODUCTION_IP }}
-          ssh -i ~/.ssh/github_actions_deploy admin@$SERVER_IP -p 818 << 'EOF'
-            cd /test_server
-            git pull origin main
-          EOF
+          ssh-keyscan -p 818 ${{ secrets.PRODUCTION_IP }} >> ~/.ssh/known_hosts
+          cat ~/.ssh/known_hosts 
+      #
+      # - name: SSH and pull latest code
+      #   run: |
+      #     SERVER_IP=${{ secrets.PRODUCTION_IP }}
+      #     ssh -i ~/.ssh/github_actions_deploy admin@$SERVER_IP -p 818 << 'EOF'
+      #       cd /test_server
+      #       git pull origin main
+      #     EOF
 
 
