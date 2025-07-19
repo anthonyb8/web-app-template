@@ -26,7 +26,8 @@ jobs:
 
       - name: SSH and pull latest code
         run: |
-          ssh -p 818 -o StrictHostKeyChecking=yes admin@192.168.2.191 << 'EOF'
+          ssh -i ~/.ssh/id_rsa admin@192.168.2.191 -p 818
+          # ssh -p 818 -o StrictHostKeyChecking=yes admin@192.168.2.191 << 'EOF'
             cd /test_server
             git pull origin main
           EOF

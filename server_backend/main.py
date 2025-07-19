@@ -18,7 +18,7 @@ app.add_middleware(
 @app.get("/api/hello")
 def read_root():
     print("Helllo")
-    return {"msg": "HelloWorld"}
+    return {"msg": "HelloWorld2"}
 
 
 @app.get("/items/{item_id}")
