@@ -20,11 +20,12 @@ jobs:
           chmod 600 ~/.ssh/github_actions_deploy
           #cat ~/.ssh/github_actions_deploy
 
-      - name: Add server to known_hosts
+
+      - name: Add SSH host key to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p 818 ${{ secrets.PRODUCTION_IP }} >> ~/.ssh/known_hosts
-          cat ~/.ssh/known_hosts 
+          ssh-keyscan -p 818 70.24.107.57 >> ~/.ssh/known_hosts
+          cat ~/.ssh/known_hosts
       #
       # - name: SSH and pull latest code
       #   run: |
