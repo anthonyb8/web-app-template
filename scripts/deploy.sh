@@ -1,29 +1,25 @@
 #!/bin/bash
-set -e
 
-# Set to true to use staging environment (for testing)
-USE_STAGING=true
+docker-compose --profile staging up -d
 
-echo "### Starting nginx for challenge..."
-docker compose up -d nginx-prod
+echo "Waiting for certbot to issue certificates..."
 
-echo "### Requesting Let's Encrypt certificate (if not already issued)..."
+# Poll cert file existence every 5 seconds, timeout after 2 minutes
+timeout=120
+interval=5
+elapsed=0
 
-CERTBOT_CMD="certonly --webroot -w /var/www/certbot \
-  --email anthonybaxter819@gmail.com \
-  -d midassystems.ca -d www.midassystems.ca \
-  --agree-tos --no-eff-email"
+while [ ! -f "./certbot-etc/live/midassystems.ca/fullchain.pem" ]; do
+  if [ $elapsed -ge $timeout ]; then
+    echo "Timeout waiting for certificates!"
+    exit 1
+  fi
+  echo "Waiting for certificate... ($elapsed/$timeout seconds elapsed)"
+  sleep $interval
+  elapsed=$((elapsed + interval))
+done
 
-if [ "$USE_STAGING" = true ]; then
-  CERTBOT_CMD="--staging $CERTBOT_CMD"
-fi
+echo "Certificates found! Proceeding..."
 
-docker compose run --rm certbot $CERTBOT_CMD || echo "Certbot run exited with error, continuing..."
-
-echo "### Reloading nginx with new certificates..."
-docker compose exec nginx-prod nginx -s reload
-
-echo "### Starting full production stack..."
-docker compose up --profile prod -d
-
-echo "### Deployment complete!"
+docker-compose --profile staging down
+docker-compose --profile prod up -d
