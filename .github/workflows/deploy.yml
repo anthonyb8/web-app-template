@@ -31,7 +31,7 @@ jobs:
       - name: SSH and pull latest code
         run: |
           ssh -i ~/.ssh/github_actions_deploy admin@$PRODUCTION_IP -p 818 << 'EOF'
-            cd /test_server
+            cd $HOME/test_server
             git pull origin main
           EOF
         env:
