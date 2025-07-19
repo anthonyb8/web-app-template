@@ -61,12 +61,13 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - certbot-www:/var/www/certbot
-    command: certonly --staging --webroot -w /var/www/certbot \
-      --email anthonybacter819@gmail.com \
+    command: >
+      certonly --staging --webroot -w /var/www/certbot \
+      --email anthonybaxter819@gmail.com \
       -d midassystems.ca -d www.midassystems.ca \
       --agree-tos --no-eff-email
     depends_on: 
-      - nginx-initial
+      - nginx-setup
     profiles:
       - staging
 

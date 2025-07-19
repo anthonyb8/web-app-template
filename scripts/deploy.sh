@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker-compose --profile staging up -d
+docker compose --profile staging up -d
 
 echo "Waiting for certbot to issue certificates..."
 
@@ -21,5 +21,5 @@ done
 
 echo "Certificates found! Proceeding..."
 
-docker-compose --profile staging down
-docker-compose --profile prod up -d
+docker compose --profile staging down
+docker compose --profile prod up -d
