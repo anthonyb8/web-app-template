@@ -35,8 +35,7 @@ jobs:
             cd $HOME/test_server
 
             # Write secrets to .env file (overwrite or create)
-      # Write secrets to .env file (overwrite or create)
-      cat > .env << EOL
+cat > .env << EOL
 ROOT_PASSWORD=${ROOT_PASSWORD}
 DATABASE_NAME=${DATABASE_NAME}
 DATABASE_USER=${DATABASE_USER}
