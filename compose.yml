@@ -15,7 +15,7 @@ services:
       - prod
 
   backend: 
-    build: ./server_backend
+    build: ./backend
     environment:
       - DB_HOST=db
       - DB_PORT=3306
@@ -30,7 +30,7 @@ services:
       - prod
 
   frontend-builder:
-    build: ./server_frontend
+    build: ./frontend
     volumes:
       - frontend_dist:/dist
     command: >

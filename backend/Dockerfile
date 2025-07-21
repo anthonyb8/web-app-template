@@ -3,7 +3,7 @@
 FROM python:3.11-slim
 
 # Set working directory
-WORKDIR /server_backend
+WORKDIR /backend
 
 # Copy only requirements first for better caching
 COPY requirements.txt .

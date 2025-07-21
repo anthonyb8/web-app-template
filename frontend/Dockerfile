@@ -3,7 +3,7 @@
 FROM node:23-slim
 
 # Create/Set dir
-WORKDIR /server_frontend 
+WORKDIR /frontend 
  
 # Copy only package files first
 COPY package.json package-lock.json ./
