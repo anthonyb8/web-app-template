@@ -22,7 +22,26 @@ jobs:
           port: ${{  secrets.PRODUCTION_PORT  }}
           script: |
             whoami
-            ls -al
+            cd $HOME/test_server
+            git pull origin main
+            chmod +x ./scripts/deploy.sh 
+
+            cat > .env << 'EOF' 
+            ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }} 
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            EOF
+
+
+            ./scripts/deploy.sh
+            # ls -al
+
+
+          #           ROOT_PASSWORD: ${{ secrets.ROOT_PASSWORD }}
+          # DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          # DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          # DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
 
           #             PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
           # PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
