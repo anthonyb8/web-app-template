@@ -32,8 +32,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
             cd $HOME/test_server
-            chmod +x ./scripts/deploy.sh 
-            # ./scripts/deploy.sh
+            ./scripts/deploy.sh
           EOF
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}

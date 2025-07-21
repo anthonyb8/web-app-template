@@ -35,7 +35,7 @@ jobs:
             cd $HOME/test_server
             git pull origin main
             chmod +x ./scripts/deploy.sh 
-            # ./scripts/deploy.sh
+            ./scripts/deploy.sh
           EOF
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}

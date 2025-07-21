@@ -2,6 +2,7 @@
 set -e
 
 echo "Starting staging services..."
+docker compose --profile prod stop
 docker compose --profile staging up -d
 
 echo "Waiting for certbot container to finish..."
