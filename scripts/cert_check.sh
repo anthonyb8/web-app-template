@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -a
+source .env
+set +a
+
 install_ssl_config_files() {
   CONF_DIR="/etc/letsencrypt"
   OPTIONS_FILE="$CONF_DIR/options-ssl-nginx.conf"
@@ -24,8 +28,8 @@ install_ssl_config_files() {
 update_certificate_staging() {
   certbot certificate
   certonly --staging --webroot -w /var/www/certbot \
-    --email anthonybaxter819@gmail.com \
-    -d midassystems.ca -d www.midassystems.ca \
+    --email "$CERTBOT_EMAIL" \
+    -d "$CERTBOT_DOMAIN" -d "www.$CERTBOT_DOMAIN" \
     --agree-tos --no-eff-email \
     --force-renewal
   certbot certificate
@@ -34,17 +38,17 @@ update_certificate_staging() {
 update_certificate() {
   certbot certificate
   certonly --webroot -w /var/www/certbot \
-    --email anthonybaxter819@gmail.com \
-    -d midassystems.ca -d www.midassystems.ca \
+    --email "$CERTBOT_EMAIL" \
+    -d "$CERTBOT_DOMAIN" -d "www.$CERTBOT_DOMAIN" \
     --agree-tos --no-eff-email \
     --force-renewal
   certbot certificate
 }
 
-# Before renewing certificates
+# Before renewing certificates, ensure proper certbot files present
 install_ssl_config_files
 
-NUM_DAYS=$(certbot certificates 2>/dev/null | grep -A7 "Certificate Name: midassystems.ca" | grep "Expiry Date" | sed -n 's/.*(\(.*\)).*/\1/p' | awk '{print $2}')
+NUM_DAYS=$(certbot certificates 2>/dev/null | grep -A7 "Certificate Name: $CERTBOT_DOMAIN" | grep "Expiry Date" | sed -n 's/.*(\(.*\)).*/\1/p' | awk '{print $2}')
 
 if [[ "$NUM_DAYS" =~ ^[0-9]+$ ]]; then
   # It's a number — do numeric comparison
@@ -55,7 +59,7 @@ if [[ "$NUM_DAYS" =~ ^[0-9]+$ ]]; then
     echo "Certificate is valid, not renewing ($NUM_DAYS days left)"
   fi
 else
-  # Not a number — probably a test cert or error
+  # Not a number — probably a test cert, should update to ensure
   echo "Test certificate"
   update_certificate
 fi
