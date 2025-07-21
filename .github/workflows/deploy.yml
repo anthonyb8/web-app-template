@@ -31,20 +31,21 @@ jobs:
 
       - name: SSH and pull latest code
         run: |
-          ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
-            cd $HOME/test_server
+  run: |
+    ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << EOF
+      cd \$HOME/test_server
 
-            cat > .env ROOT_PASSWORD=${ROOT_PASSWORD}\
-            DATABASE_NAME=${DATABASE_NAME}\
-            DATABASE_USER=${DATABASE_USER}\
-            DATABASE_PASSWORD=${DATABASE_PASSWORD} 
+      cat > .env <<EOL
+ROOT_PASSWORD=${ROOT_PASSWORD}
+DATABASE_NAME=${DATABASE_NAME}
+DATABASE_USER=${DATABASE_USER}
+DATABASE_PASSWORD=${DATABASE_PASSWORD}
+EOL
 
-
-            git pull origin main
-            chmod +x ./scripts/deploy.sh 
-            ./scripts/deploy.sh
-
-          EOF
+      git pull origin main
+      chmod +x ./scripts/deploy.sh
+      ./scripts/deploy.sh
+EOF
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
           PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
