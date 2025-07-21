@@ -41,5 +41,9 @@ jobs:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
           PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
           PRODUCTION_USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
+          ROOT_PASSWORD: ${{ secrets.ROOT_PASSWORD }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
 
 

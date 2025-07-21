@@ -4,10 +4,10 @@ services:
     volumes: 
       - mysql_data:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DATABASE_NAME}
+      - MYSQL_USER=${DATABASE_USER}
+      - MYSQL_PASSWORD=${DATABASE_PASSWORD}
     networks:
       - backend-net 
     profiles:
@@ -19,9 +19,9 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_NAME=${MYSQL_DATABASE}
-      - DB_USER=${MYSQL_USER}
-      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=${DATABASE_NAME}
+      - DB_USER=${DATABASE_USER}
+      - DB_PASSWORD=${DATABASE_PASSWORD}
     networks:
       - backend-net 
       - frontend-net
@@ -92,6 +92,8 @@ services:
       - prod
     networks:
       - frontend-net
+    depends_on:
+      - backend
 
 volumes: 
   frontend_dist:
