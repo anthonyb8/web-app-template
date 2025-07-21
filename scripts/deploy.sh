@@ -1,9 +1,14 @@
 #!/bin/bash
 set -e
 
+export ROOT_PASSWORD="${ROOT_PASSWORD}"
+export DATABASE_NAME="${DATABASE_NAME}"
+export DATABASE_USER="${DATABASE_USER}"
+export DATABASE_PASSWORD="${DATABASE_PASSWORD}"
+
 echo "Starting staging services..."
 docker compose --profile prod stop
-docker compose --profile staging up -d
+docker compose --profile staging up -d --build
 
 echo "Waiting for certbot container to finish..."
 
@@ -51,6 +56,6 @@ echo "Stopping staging services..."
 docker compose --profile staging stop
 
 echo "Starting production services..."
-docker compose --profile prod up -d
+docker compose --profile prod up -d --build
 
 echo "Deployment complete."
