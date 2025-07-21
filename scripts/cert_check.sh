@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -e
-
-set -a
-source .env
-set +a
+# set -e
+#
+# set -a
+# source .env
+# set +a
 
 install_ssl_config_files() {
   CONF_DIR="/etc/letsencrypt"
@@ -31,7 +31,7 @@ update_certificate_staging() {
   certbot certificate
   certonly --staging --webroot -w /var/www/certbot \
     --email "$CERTBOT_EMAIL" \
-    -d "$CERTBOT_DOMAIN" -d "www.$CERTBOT_DOMAIN" \
+    -d "$DOMAIN_ROOT" -d "$DOMAIN_NAME" \
     --agree-tos --no-eff-email \
     --force-renewal
   certbot certificate
@@ -41,7 +41,7 @@ update_certificate() {
   certbot certificate
   certonly --webroot -w /var/www/certbot \
     --email "$CERTBOT_EMAIL" \
-    -d "$CERTBOT_DOMAIN" -d "www.$CERTBOT_DOMAIN" \
+    -d "$DOMAIN_ROOT" -d "$DOMAIN_NAME" \
     --agree-tos --no-eff-email \
     --force-renewal
   certbot certificate

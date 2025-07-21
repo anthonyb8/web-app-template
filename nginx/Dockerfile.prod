@@ -9,11 +9,11 @@ COPY nginx.prod.conf  /etc/nginx/templates/nginx.conf.template
 
 
 # Copy the entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY nginx-entrypoint.sh /nginx-entrypoint.sh
+RUN chmod +x /nginx-entrypoint.sh
 
 # Override entrypoint to run envsubst before starting nginx
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/nginx-entrypoint.sh"]
 
 # Default command: run nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
