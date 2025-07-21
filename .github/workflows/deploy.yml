@@ -34,7 +34,7 @@ jobs:
             CERTBOT_EMAIL=${{ secrets.CERTBOT_EMAIL }}
             DOMAIN_ROOT=${{ secrets.DOMAIN_ROOT }}
             DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
-            SSL_CERT=${{ secrets.iSSL_CERT }}
+            SSL_CERT=${{ secrets.SSL_CERT }}
             SSL_CERT_KEY=${{secrets.SSL_CERT_KEY }}
             EOF
 
