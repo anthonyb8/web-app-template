@@ -1,0 +1,42 @@
+
+name: Renew SSL Certs Weekly
+
+on:
+  schedule:
+    - cron '0 4 * * 0' # every Sunday at 4 am UTC 
+
+jobs: 
+  renew-certs:
+    runs-on: ubuntu-latest 
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$PRIVATE_KEY" > ~/.ssh/github_actions_deploy
+          chmod 600 ~/.ssh/github_actions_deploy
+        env:
+          PRIVATE_KEY: ${{ secrets.PRODUCTION_KEY_PRIVATE }} 
+
+      - name: Add SSH host key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p $PRODUCTION_PORT $PRODUCTION_IP >> ~/.ssh/known_hosts
+        env:
+          PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
+          PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
+
+      - name: SSH and pull latest code
+        run: |
+          ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
+            cd $HOME/test_server
+            chmod +x ./scripts/deploy.sh 
+            # ./scripts/deploy.sh
+          EOF
+        env:
+          PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
+          PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
+          PRODUCTION_USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
