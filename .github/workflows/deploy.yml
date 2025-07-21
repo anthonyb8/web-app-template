@@ -13,6 +13,21 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Multiple commands
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_IP  }}
+          username: ${{ secrets.PRODUCTION_USERNAME  }}
+          key: ${{ secrets.PRODUCTION_KEY_PRIVATE  }}
+          port: ${{  secrets.PRODUCTION_PORT  }}
+          script: |
+            whoami
+            ls -al
+
+          #             PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
+          # PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
+          # PRODUCTION_USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
+          #
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
