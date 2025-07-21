@@ -33,7 +33,7 @@ update_certificate_staging() {
 
 update_certificate() {
   certbot certificates
-  cerbot certonly --webroot -w /var/www/certbot \
+  certbot certonly --webroot -w /var/www/certbot \
     --email "$CERTBOT_EMAIL" \
     -d "$DOMAIN_ROOT" -d "$DOMAIN_NAME" \
     --agree-tos --no-eff-email \
