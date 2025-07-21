@@ -32,21 +32,14 @@ jobs:
       - name: SSH and pull latest code
         run: |
           ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
-cd $HOME/test_server
+          cd \$HOME/test_server
 
-            # Write secrets to .env file (overwrite or create)
-cat > .env << EOL
-ROOT_PASSWORD=${ROOT_PASSWORD}
-DATABASE_NAME=${DATABASE_NAME}
-DATABASE_USER=${DATABASE_USER}
-DATABASE_PASSWORD=${DATABASE_PASSWORD}
-EOL
+          printf "ROOT_PASSWORD=${ROOT_PASSWORD}\nDATABASE_NAME=${DATABASE_NAME}\nDATABASE_USER=${DATABASE_USER}\nDATABASE_PASSWORD=${DATABASE_PASSWORD}\n" > .env
 
-
-git pull origin main
-chmod +x ./scripts/deploy.sh 
-./scripts/deploy.sh
-EOF
+          git pull origin main
+          chmod +x ./scripts/deploy.sh
+          ./scripts/deploy.sh
+          EOF
         env:
           PRODUCTION_IP: ${{ secrets.PRODUCTION_IP }}
           PRODUCTION_PORT: ${{ secrets.PRODUCTION_PORT }}
