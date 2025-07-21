@@ -31,6 +31,11 @@ jobs:
             DATABASE_NAME=${{ secrets.DATABASE_NAME }}
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            CERTBOT_EMAIL=${{ secrets.CERTBOT_EMAIL }}
+            DOMAIN_ROOT=${{ secrets.DOMAIN_ROOT }}
+            DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
+            SSL_CERT=${{ secrets.iSSL_CERT }}
+            SSL_CERT_KEY=${{secrets.SSL_CERT_KEY }}
             EOF
 
             ./scripts/deploy.sh
