@@ -34,12 +34,12 @@ jobs:
           ssh -i ~/.ssh/github_actions_deploy $PRODUCTION_USERNAME@$PRODUCTION_IP -p $PRODUCTION_PORT << 'EOF'
             cd $HOME/test_server
 
-            cat > .env << 'EOL' 
+            cat > .env << 'EOF' 
             ROOT_PASSWORD=${ROOT_PASSWORD} 
             DATABASE_NAME=${DATABASE_NAME}
             DATABASE_USER=${DATABASE_USER}
             DATABASE_PASSWORD=${DATABASE_PASSWORD} 
-            EOL
+            EOF
 
 
             git pull origin main
