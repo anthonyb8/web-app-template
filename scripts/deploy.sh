@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+set -a
+source .env
+set +a
+
 export ROOT_PASSWORD="${ROOT_PASSWORD}"
 export DATABASE_NAME="${DATABASE_NAME}"
 export DATABASE_USER="${DATABASE_USER}"

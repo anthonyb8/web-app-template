@@ -35,12 +35,14 @@ jobs:
             cd $HOME/test_server
 
             # Write secrets to .env file (overwrite or create)
-            cat > .env << EOL
-              ROOT_PASSWORD=${ROOT_PASSWORD}
-              DATABASE_NAME=${DATABASE_NAME}
-              DATABASE_USER=${DATABASE_USER}
-              DATABASE_PASSWORD=${DATABASE_PASSWORD}
-            EOL
+      # Write secrets to .env file (overwrite or create)
+      cat > .env << EOL
+ROOT_PASSWORD=${ROOT_PASSWORD}
+DATABASE_NAME=${DATABASE_NAME}
+DATABASE_USER=${DATABASE_USER}
+DATABASE_PASSWORD=${DATABASE_PASSWORD}
+EOL
+
 
             git pull origin main
             chmod +x ./scripts/deploy.sh 
