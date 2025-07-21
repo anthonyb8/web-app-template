@@ -1,10 +1,8 @@
 #!/bin/sh
 set -e
 
-# Substitute environment variables in the template to create actual config
-envsubst "$DOMAIN_ROOT $DOMAIN_NAME $SSL_CERT $SSL_CERT_KEY" \
-  </etc/nginx/templates/nginx.conf.template \
-  >/etc/nginx/conf.d/default.conf
+envsubst </etc/nginx/templates/nginx.conf.template > \
+  /etc/nginx/conf.d/default.conf # && nginx -s reload
 
 # Execute the CMD from Dockerfile (start nginx)
 exec "$@"
