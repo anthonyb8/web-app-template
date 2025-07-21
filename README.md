@@ -1,4 +1,4 @@
-# 🌥️ cloud-deploy-template
+# web-cloud-template
 
 A minimal full-stack deployment template that uses Docker, Nginx, Certbot (for HTTPS), and MySQL — ready to run on a real cloud server with a real domain name.
 
