@@ -1,9 +1,8 @@
-
 name: Renew SSL Certs Weekly
 
 on:
   schedule:
-    - cron '0 4 * * 0' # every Sunday at 4 am UTC 
+    - cron: '0 4 * * 0' # every Sunday at 4 am UTC 
 
 jobs: 
   renew-certs:
