@@ -20,16 +20,19 @@ This repo is ideal for:
 
 ```
 cloud-deploy-template/
-├── backend/              # Your backend app
-├── frontend/             # Your frontend app
-├── nginx/                # Nginx config & Certbot setup
-│   └── nginx.conf
+├── backend/              # Backend app
+├── frontend/             # Frontend app
+├── nginx/                
+│   └── nginx.dev.conf    # Nginx configuration for local dev   
+│   └── nginx.setup.conf  # Nginx configuration for cerbot validation and renewal 
+│   └── nginx.prod.conf   # Nginx configuration for production
 ├── sql/                  # SQL schema & seed data (optional)
 │   └── schema.sql
 ├── docker-compose.yml    # Core services: backend, frontend, MySQL
 ├── .env.example          # Environment variable template
 ├── scripts/
 │   └── deploy.sh         # SSH-based deploy script
+│   └── cert_check.sh     # Script for creating and renewing SSL Certificate 
 └── README.md
 ```
 
