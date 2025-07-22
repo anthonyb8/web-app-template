@@ -9,10 +9,24 @@ services:
       - MYSQL_USER=${DATABASE_USER}
       - MYSQL_PASSWORD=${DATABASE_PASSWORD}
     networks:
-      - backend-net 
+      - backend-net
+      - db-net
     profiles:
       - dev 
       - prod
+
+  dbmate:
+    image: amacneil/dbmate
+    depends_on:
+      - db
+    environment:
+      # - DATABASE_URL=mysql://test:password@db:3306/test_db
+      - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@db:3306/${DATABASE_NAME}
+    volumes:
+      - ./db/migrations:/db/migrations
+    networks:
+      - db-net
+    command: ["--wait","up"]
 
   backend: 
     build: ./backend
@@ -119,6 +133,10 @@ volumes:
 networks:
   frontend-net:
     driver: bridge
+ 
+  db-net:
+    driver: bridge
+
 
   backend-net:
     driver: bridge
