@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Multiple commands
+      - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.PRODUCTION_IP  }}
