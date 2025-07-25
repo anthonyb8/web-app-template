@@ -1,5 +1,5 @@
 services:
-  db: 
+  mysql_db: 
     image: mysql:8.4 
     volumes: 
       - mysql_data:/var/lib/mysql
@@ -21,7 +21,7 @@ services:
       - db
     environment:
       # - DATABASE_URL=mysql://test:password@db:3306/test_db
-      - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@db:3306/${DATABASE_NAME}
+      - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@mysql_db:3306/${DATABASE_NAME}
     volumes:
       - ./db/migrations:/db/migrations
     networks:
@@ -34,7 +34,7 @@ services:
   backend: 
     build: ./backend
     environment:
-      - DB_HOST=db
+      - DB_HOST=mysql_db
       - DB_PORT=3306
       - DB_NAME=${DATABASE_NAME}
       - DB_USER=${DATABASE_USER}
