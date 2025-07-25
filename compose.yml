@@ -18,7 +18,7 @@ services:
   dbmate:
     image: amacneil/dbmate
     depends_on:
-      - db
+      - mysql_db
     environment:
       # - DATABASE_URL=mysql://test:password@db:3306/test_db
       - DATABASE_URL=mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@mysql_db:3306/${DATABASE_NAME}
