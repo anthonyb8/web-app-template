@@ -30,6 +30,7 @@ jobs:
             if [ ! -d "$REPO_DIR/.git" ]; then
                 echo "Repo not found, cloning..."
                 git clone "$REPO_URL" "$REPO_DIR"
+                cd "$REPO_DIR"
             else
                 echo "Repo found, pulling latest changes..."
                 cd "$REPO_DIR"
