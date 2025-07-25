@@ -50,12 +50,12 @@ if [[ "$NUM_DAYS" =~ ^[0-9]+$ ]]; then
   # It's a number — do numeric comparison
   if [ "$NUM_DAYS" -le 14 ]; then
     echo "Need to renew certificate"
-    update_certificate_staging
+    update_certificate
   else
     echo "Certificate is valid, not renewing ($NUM_DAYS days left)"
   fi
 else
   # Not a number — probably a test cert, should update to ensure
   echo "Test certificate"
-  update_certificate_staging
+  update_certificate
 fi
