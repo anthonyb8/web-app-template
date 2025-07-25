@@ -24,7 +24,7 @@ jobs:
             # whoami
 
             REPO_DIR="$HOME/web-cloud-template"
-            REPO_URL="https://github.com/anthonyb8/your-repo.git"
+            REPO_URL="https://github.com/anthonyb8/web-cloud-template.git"
 
             # Clone the repo if it doesn't exist
             if [ ! -d "$REPO_DIR/.git" ]; then
