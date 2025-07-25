@@ -17,7 +17,9 @@ docker compose --profile staging up -d --build
 echo "Waiting for certbot container to finish..."
 
 # Name of your certbot container (adjust if needed)
-CERTBOT_CONTAINER="test_server-certbot-setup-1"
+# CERTBOT_CONTAINER="test_server-certbot-setup-1"
+CERTBOT_CONTAINER="web-cloud-template-certbot-setup-1"
+CERTBOT_VOLUME="web-cloud-template_certbot-etc"
 
 timeout=120
 interval=5
@@ -49,7 +51,7 @@ done
 
 echo "Checking if certificate file exists..."
 
-if docker run --rm -v test_server_certbot-etc:/data busybox sh -c '[ -f /data/live/midassystems.ca/fullchain.pem ]'; then
+if docker run --rm -v "$CERTBOT_VOLUME:/data" busybox sh -c '[ -f /data/live/midassystems.ca/fullchain.pem ]'; then
   echo "Certificate found!"
 else
   echo "Certificate not found!"
