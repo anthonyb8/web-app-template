@@ -22,10 +22,21 @@ jobs:
           port: ${{  secrets.PRODUCTION_PORT  }}
           script: |
             whoami
-            cd $HOME/test_server
-            git pull origin main
-            chmod +x ./scripts/deploy.sh 
 
+            REPO_DIR="$HOME/web-cloud-template"
+            REPO_URL="https://github.com/anthonyb8/your-repo.git"
+
+            # Clone the repo if it doesn't exist
+            if [ ! -d "$REPO_DIR/.git" ]; then
+                echo "Repo not found, cloning..."
+                git clone "$REPO_URL" "$REPO_DIR"
+            else
+                echo "Repo found, pulling latest changes..."
+                cd "$REPO_DIR"
+                git pull origin main 
+            fi
+
+            # Import application/ TLS envrionment varibles
             cat > .env << 'EOF' 
             ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }} 
             DATABASE_NAME=${{ secrets.DATABASE_NAME }}
@@ -38,4 +49,6 @@ jobs:
             SSL_CERT_KEY=${{secrets.SSL_CERT_KEY }}
             EOF
 
+            # Make deploy script executable and run it
+            chmod +x ./scripts/deploy.sh 
             ./scripts/deploy.sh
