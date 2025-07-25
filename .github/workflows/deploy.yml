@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.PRODUCTION_KEY_PRIVATE  }}
           port: ${{  secrets.PRODUCTION_PORT  }}
           script: |
-            whoami
+            # whoami
 
             REPO_DIR="$HOME/web-cloud-template"
             REPO_URL="https://github.com/anthonyb8/your-repo.git"
