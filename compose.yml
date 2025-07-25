@@ -26,6 +26,9 @@ services:
       - ./db/migrations:/db/migrations
     networks:
       - db-net
+    profiles:
+      - dev 
+      - prod
     command: ["--wait","up"]
 
   backend: 
@@ -136,7 +139,6 @@ networks:
  
   db-net:
     driver: bridge
-
 
   backend-net:
     driver: bridge
