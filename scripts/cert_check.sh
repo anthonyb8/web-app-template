@@ -47,7 +47,7 @@ install_ssl_config_files
 NUM_DAYS=$(certbot certificates 2>/dev/null | grep -A7 "Certificate Name: $CERTBOT_DOMAIN" | grep "Expiry Date" | sed -n 's/.*(\(.*\)).*/\1/p' | awk '{print $2}')
 
 if [[ "$NUM_DAYS" =~ ^[0-9]+$ ]]; then
-  # It's a number — do numeric comparison
+  # If it's a number — do numeric comparison
   if [ "$NUM_DAYS" -le 14 ]; then
     echo "Need to renew certificate"
     update_certificate_staging
