@@ -12,12 +12,12 @@ COPY package.json package-lock.json ./
 # Install dependencies 
 RUN npm install 
 
-ARG INSTALL_PLAYWRIGHT=false
-
-RUN echo "$INSTALL_PLAYWRIGHT"
-
-# Conditionally install Playwright and its deps
-RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
-      npm install @playwright/test && \
-      npx playwright install --with-deps; \
-    fi
+# ARG INSTALL_PLAYWRIGHT=false
+#
+# RUN echo "$INSTALL_PLAYWRIGHT"
+#
+# # Conditionally install Playwright and its deps
+# RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
+#       npm install @playwright/test && \
+#       npx playwright install --with-deps; \
+#     fi
