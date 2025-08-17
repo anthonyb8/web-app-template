@@ -56,8 +56,8 @@ services:
     build: 
       context: ./backend
       dockerfile : Dockerfile.test
-    env_file: 
-        - .env 
+    # env_file: 
+    #     - .env 
     environment:
       - MYSQL_HOST=mysql_staging
       - MYSQL_PORT=3306
@@ -72,6 +72,8 @@ services:
       - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
       - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
       - APP_URL=http://frontend:5173 
+      - EMAIL=email@exmaple.com
+      - EMAIL_PASSWORD=password
       - DEBUG=True
     networks:
       - frontend-net 
@@ -118,7 +120,7 @@ services:
     profiles:
       - test_e2e
     entrypoint: ["/scripts/wait-for-frontend.sh"]
-    command: sh -c "npx playwright test --reporter=list"
+    command: sh -c "npm install && npx playwright install --with-deps && npm run test:e2e"
 
   e2e_tests_watch: 
     <<: *test_base
@@ -126,12 +128,12 @@ services:
       - test_e2e_watch
     entrypoint: ["/scripts/wait-for-frontend.sh"]
     command: |
-        npx nodemon \
-          --delay 5 \
-          --watch tests/e2e \
-          --watch src \
-          --ext js,ts,jsx \
-          --exec "sh -c '/scripts/wait-for-frontend.sh && npx playwright test'"
+      sh -c "npm install && npx playwright install --with-deps && npx nodemon \
+        --delay 5 \
+        --watch tests/e2e \
+        --watch src \
+        --ext js,ts,jsx \
+        --exec 'sh -c \"/scripts/wait-for-frontend.sh && npx playwright test\"'"
 
 volumes: 
   mysql_test_data:

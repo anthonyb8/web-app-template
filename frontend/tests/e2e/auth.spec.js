@@ -160,22 +160,23 @@ test.describe("Verify-MFA Page", () => {
   });
 });
 
-// Forgot Password Page
-test.describe("Forgot Password Page", () => {
-  test("forgot-password-submit", async ({ page }) => {
-    const result = await TestServices.createVerifiedUser(email, password);
-    await AuthServices.verify_email(result.data?.token);
-
-    await page.goto(url("/forgot-password"));
-    await page.locator('input[name="email"]').fill(email);
-    await page.locator('button[type="submit"]').click();
-
-    const message = page.locator('div[name="message"]');
-    await expect(message).toBeVisible();
-
-    await TestServices.deleteUser(email, password);
-  });
-});
+// todo: How to test with a dummy email.
+// // Forgot Password Page
+// test.describe("Forgot Password Page", () => {
+//   test("forgot-password-submit", async ({ page }) => {
+//     const result = await TestServices.createVerifiedUser(email, password);
+//     await AuthServices.verify_email(result.data?.token);
+//
+//     await page.goto(url("/forgot-password"));
+//     await page.locator('input[name="email"]').fill(email);
+//     await page.locator('button[type="submit"]').click();
+//
+//     const message = page.locator('div[name="message"]');
+//     await expect(message).toBeVisible();
+//
+//     await TestServices.deleteUser(email, password);
+//   });
+// });
 
 // Reset Password Page
 test.describe("Reset Password Page", () => {
