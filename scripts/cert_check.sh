@@ -44,7 +44,8 @@ update_certificate() {
 # Before renewing certificates, ensure proper certbot files present
 install_ssl_config_files
 
-NUM_DAYS=$(certbot certificates 2>/dev/null | grep -A7 "Certificate Name: $CERTBOT_DOMAIN" | grep "Expiry Date" | sed -n 's/.*(\(.*\)).*/\1/p' | awk '{print $2}')
+# Pull the number of days remaining on cert with matchin domain name.
+NUM_DAYS=$(certbot certificates 2>/dev/null | grep -A7 "Certificate Name: $DOMAIN_ROOT" | grep "Expiry Date" | sed -n 's/.*(\(.*\)).*/\1/p' | awk '{print $2}')
 
 if [[ "$NUM_DAYS" =~ ^[0-9]+$ ]]; then
   # If it's a number — do numeric comparison

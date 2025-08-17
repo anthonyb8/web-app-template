@@ -1,0 +1,55 @@
+.account-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+.subtitle {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.account-card {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.account-card p {
+  margin: 0.5rem 0;
+}
+
+.button-group {
+  margin-top: 1.5rem;
+}
+
+.edit-btn,
+.logout-btn {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.edit-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.logout-btn {
+  background-color: #ff4d4d;
+  color: white;
+  margin-left: 1rem;
+}
+
+.edit-btn:hover {
+  background-color: #0056b3;
+}
+
+.logout-btn:hover {
+  background-color: #cc0000;
+}

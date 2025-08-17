@@ -1,0 +1,149 @@
+x-test-base: &test_base
+    build: 
+      context: ./frontend
+      dockerfile : Dockerfile.test
+      args:
+        INSTALL_PLAYWRIGHT: "true"
+    environment:
+      - FRONTEND_URL=http://frontend:5173
+      - VITE_API_BASE_URL=http://backend:8000
+    networks: 
+      - frontend-net
+      - backend-net
+    ports:
+      - 9323:9323
+    volumes:
+      - ./frontend:/frontend
+      - ./scripts/wait-for-frontend.sh:/scripts/wait-for-frontend.sh
+
+services:
+  mysql_staging: 
+    image: mysql:8.4 
+    volumes: 
+      - mysql_test_data:/var/lib/mysql
+    environment: 
+      - MYSQL_ROOT_PASSWORD=test_root_pass
+      - MYSQL_DATABASE=test_db 
+      - MYSQL_USER=test_user 
+      - MYSQL_PASSWORD=test_pass
+    profiles:
+      - database
+      - staging
+      - staging_local
+      - test_e2e_watch
+    networks:
+      - backend-net
+      - db-net
+
+  dbmate_staging:
+    image: amacneil/dbmate
+    depends_on:
+      - mysql_staging
+    environment:
+      - DATABASE_URL=mysql://test_user:test_pass@mysql_staging:3306/test_db
+    volumes:
+      - ./db/migrations:/db/migrations
+    networks:
+      - db-net
+    profiles:
+      - database
+      - staging
+      - staging_local
+      - test_e2e_watch
+    command: ["--wait","up"]
+
+  backend: 
+    build: 
+      context: ./backend
+      dockerfile : Dockerfile.test
+    env_file: 
+        - .env 
+    environment:
+      - MYSQL_HOST=mysql_staging
+      - MYSQL_PORT=3306
+      - MYSQL_ROOT_PASSWORD=test_root_pass
+      - MYSQL_DATABASE=test_db 
+      - MYSQL_USER=test_user 
+      - MYSQL_PASSWORD=test_pass
+      - DATABASE_URL=mysql+pymysql://test_user:test_pass@mysql_staging:3306/test_db
+      - ALLOWED_ORIGINS=["http://frontend:5173", "http://localhost:5173", "http://localhost:8000"]
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
+      - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
+      - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
+      - APP_URL=http://frontend:5173 
+      - DEBUG=True
+    networks:
+      - frontend-net 
+      - backend-net 
+    volumes:
+      - ./scripts/wait-for-db.sh:/scripts/wait-for-db.sh
+      - ./backend:/backend 
+    profiles:
+      - backend
+      - staging
+      - staging_local
+      - test_e2e_watch
+    ports:
+      - 8000:8000
+    entrypoint: ["/scripts/wait-for-db.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile : Dockerfile.test
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - VITE_API_BASE_URL=http://backend:8000
+    networks:
+      - frontend-net
+      - backend-net 
+    profiles:
+      - frontend 
+      - staging
+      - test_e2e_watch
+    ports:
+      - 5173:5173
+    volumes:
+      - ./scripts/wait-for-backend.sh:/scripts/wait-for-backend.sh
+      - ./frontend:/frontend
+      - node_modules:/frontend/node_modules  # Mounts over the local nodes_module
+    entrypoint: ["/scripts/wait-for-backend.sh"]
+    command: sh -c "npm run dev -- --host 0.0.0.0 --port 5173"
+
+  # E2E 
+  e2e_tests: 
+    <<: *test_base
+    profiles:
+      - test_e2e
+    entrypoint: ["/scripts/wait-for-frontend.sh"]
+    command: sh -c "npx playwright test --reporter=list"
+
+  e2e_tests_watch: 
+    <<: *test_base
+    profiles:
+      - test_e2e_watch
+    entrypoint: ["/scripts/wait-for-frontend.sh"]
+    command: |
+        npx nodemon \
+          --delay 5 \
+          --watch tests/e2e \
+          --watch src \
+          --ext js,ts,jsx \
+          --exec "sh -c '/scripts/wait-for-frontend.sh && npx playwright test'"
+
+volumes: 
+  mysql_test_data:
+  node_modules:
+
+networks:
+  frontend-net:
+    driver: bridge
+ 
+  db-net:
+    driver: bridge
+
+  backend-net:
+    driver: bridge
+

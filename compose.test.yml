@@ -1,0 +1,270 @@
+# Backend
+x-backend-base: &backend_base 
+  build: ./backend
+  env_file: 
+      - .env.example 
+  environment:
+    - MYSQL_HOST=mysql_test
+    - MYSQL_PORT=3306
+    - MYSQL_ROOT_PASSWORD=test_root_pass
+    - MYSQL_DATABASE=test_db 
+    - MYSQL_USER=test_user 
+    - MYSQL_PASSWORD=test_pass
+    - DATABASE_URL=mysql+pymysql://test_user:test_pass@mysql_test:3306/test_db
+    - ALLOWED_ORIGINS=["http://localhost:8000", "http://localhost:3000"]
+    - JWT_ALGORITHM=HS256
+    - JWT_ACCESS_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
+    - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
+    - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
+    - APP_URL=http://localhost:8001 
+  networks:
+      - frontend-net 
+      - backend-net 
+
+# Frontend
+x-frontend-base: &frontend_base 
+    build: ./frontend
+    networks:
+      - frontend-net
+
+services:
+  mysql_test: 
+    image: mysql:8.4 
+    volumes: 
+      - mysql_test_data:/var/lib/mysql
+    environment: 
+      - MYSQL_ROOT_PASSWORD=test_root_pass
+      - MYSQL_DATABASE=test_db 
+      - MYSQL_USER=test_user 
+      - MYSQL_PASSWORD=test_pass
+    profiles:
+      - test
+      - database
+      - test_backend_integration_watch
+      - test_frontend_integration_watch
+      - test_e2e_watch
+    networks:
+      - backend-net
+      - db-net
+
+  dbmate_test:
+    image: amacneil/dbmate
+    depends_on:
+      - mysql_test
+    environment:
+      - DATABASE_URL=mysql://test_user:test_pass@mysql_test:3306/test_db
+    volumes:
+      - ./db/migrations:/db/migrations
+    networks:
+      - db-net
+    profiles:
+      - test
+      - database
+      - test_backend_integration_watch
+      - test_frontend_integration_watch
+      - test_e2e_watch
+    command: ["--wait","up"]
+
+  backend_dummy: 
+    build: 
+      context: ./backend
+      dockerfile : Dockerfile.test
+    env_file:
+      - .env.example 
+    environment:
+      - MYSQL_HOST=mysql_test
+      - MYSQL_PORT=3306
+      - MYSQL_ROOT_PASSWORD=test_root_pass
+      - MYSQL_DATABASE=test_db 
+      - MYSQL_USER=test_user 
+      - MYSQL_PASSWORD=test_pass
+      - DATABASE_URL=mysql+pymysql://test_user:test_pass@mysql_test:3306/test_db
+      - ALLOWED_ORIGINS=["http://localhost:3000"]
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
+      - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
+      - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
+      - APP_URL=http://localhost:5174 
+      - DEBUG=True
+    volumes:
+      - ./scripts/wait-for-db.sh:/scripts/wait-for-db.sh
+      - ./backend:/backend 
+    profiles:
+      - backend
+      - test_frontend_integration_watch
+    networks:
+      - frontend-net 
+      - backend-net 
+    ports:
+      - 8002:8000
+    entrypoint: ["/scripts/wait-for-db.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend_dummy:
+    build: 
+      context: ./frontend
+      dockerfile : Dockerfile.test
+    environment: 
+      - VITE_API_BASE_URL=http://backend_dummy:8000
+    networks:
+      - frontend-net
+    profiles:
+      - frontend 
+      - staging
+      - test_e2e_watch
+    ports:
+      - 5174:5173
+    volumes:
+      - ./scripts/wait-for-backend.sh:/scripts/wait-for-backend.sh
+      - ./frontend:/frontend
+    entrypoint: ["/scripts/wait-for-backend.sh"]
+    command: sh -c "npm run dev"
+
+  
+  # Unit tests
+  backend_unit_tests: 
+    <<: *backend_base
+    profiles:
+      - test
+      - test_unit 
+      - test_backend 
+      - test_backend_unit
+    command: "python -m unittest discover tests.unit"
+
+  backend_unit_tests_watch: 
+    <<: *backend_base
+    profiles:
+      - test_backend_unit_watch
+    develop:
+      watch:
+        - path: ./backend/app
+          target: /backend/app
+          action: sync+restart
+        - path: ./backend/tests
+          target: /backend/tests
+          action: sync+restart
+    command: >
+      sh -c "
+        python -m unittest discover tests.unit ;
+        tail -f /dev/null
+      "
+
+  frontend_unit_tests: 
+    <<: *frontend_base
+    profiles:
+      - test
+      - test_unit 
+      - test_frontend
+      - test_frontend_unit
+    command: sh -c  "npm run test:unit"
+
+  frontend_unit_tests_watch: 
+    <<: *frontend_base
+    profiles:
+      - test_frontend_unit_watch
+    develop:
+      watch:
+        - path: ./frontend/src
+          target: /frontend/src
+          action: sync+restart
+        - path: ./frontend/tests
+          target: /frontend/tests
+          action: sync+restart
+    command: > 
+      sh -c  "
+        npm run test:unit:watch; 
+        tail -f /dev/null
+      "
+
+  # Integration tests 
+  backend_integration_tests: 
+    <<: *backend_base
+    volumes:
+      - ./scripts/wait-for-db.sh:/scripts/wait-for-db.sh
+    profiles:
+      - test
+      - test_integration 
+      - test_backend 
+      - test_backend_integration
+    ports:
+      - 8001:8000
+    entrypoint: ["/scripts/wait-for-db.sh"]
+    command: "python -m unittest discover tests.integration"
+
+  backend_integration_tests_watch: 
+    <<: *backend_base
+    volumes:
+      - ./scripts/wait-for-db.sh:/scripts/wait-for-db.sh
+    profiles:
+      - test_backend_integration_watch
+    ports:
+      - 8001:8000
+    develop:
+      watch:
+        - path: ./backend/app
+          target: /backend/app
+          action: sync+restart
+        - path: ./backend/tests
+          target: /backend/tests
+          action: sync+restart
+    entrypoint: ["/scripts/wait-for-db.sh"]
+    command: "python -m unittest discover tests.integration"
+
+  frontend_integration_tests: 
+    <<: *frontend_base
+    environment:
+      - BACKEND_URL=http://backend_dummy:8000
+      - VITE_API_BASE_URL=http://backend_dummy:8000
+    profiles:
+      - test
+      - test_integration 
+      - test_frontend
+      - test_frontend_integration
+    ports:
+      - 5174:5173
+    volumes:
+      - ./scripts/wait-for-backend.sh:/scripts/wait-for-backend.sh
+    entrypoint: ["/scripts/wait-for-backend.sh"]
+    command: sh -c  "npm run test:integration"
+
+
+  frontend_integration_tests_watch: 
+    <<: *frontend_base
+    environment:
+      - BACKEND_URL=http://backend_dummy:8000
+      - VITE_API_BASE_URL=http://backend_dummy:8000
+    profiles:
+      - test_frontend_integration_watch
+    ports:
+      - 5174:5173
+    volumes:
+      - ./scripts/wait-for-backend.sh:/scripts/wait-for-backend.sh
+    develop:
+      watch:
+        - path: ./frontend/src
+          target: /frontend/src
+          action: sync+restart
+        - path: ./frontend/tests
+          target: /frontend/tests
+          action: sync+restart
+    entrypoint: ["/scripts/wait-for-backend.sh"]
+    command: > 
+      sh -c  "
+        npm run test:integration:watch;
+        tail -f /dev/null
+      "
+ 
+volumes: 
+  mysql_test_data:
+
+  node_modules:
+
+networks:
+  frontend-net:
+    driver: bridge
+ 
+  db-net:
+    driver: bridge
+
+  backend-net:
+    driver: bridge

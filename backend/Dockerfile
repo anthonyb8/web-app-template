@@ -2,6 +2,9 @@
 
 FROM python:3.11-slim
 
+# Needed to poll database to ensure its running before starting
+RUN apt-get update && apt-get install -y default-mysql-client && apt-get clean
+
 # Set working directory
 WORKDIR /backend
 
@@ -13,7 +16,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the app code
 COPY . .
-
-# Run the FastAPI app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
-
