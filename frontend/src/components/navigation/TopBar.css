@@ -1,0 +1,115 @@
+.topbar {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  z-index: 999;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.topbar-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.current-date {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.user-email {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .topbar {
+    left: 200px;
+    padding: 0 1rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .current-date {
+    font-size: 0.8rem;
+  }
+
+  .user-details {
+    display: none;
+  }
+
+  .user-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    left: 0;
+    padding: 0 1rem;
+  }
+
+  .page-title {
+    font-size: 1.1rem;
+  }
+}

@@ -1,26 +1,15 @@
-import { useState } from "react";
-import axios from "axios";
+import "./App.css";
+import { AuthProvider } from "./context/AuthContext";
+import AppRoutes from "./routes";
+import { HelmetProvider } from "react-helmet-async";
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  const fetchMessage = async () => {
-    try {
-      const response = await axios.get("/api/hello");
-      console.log(response);
-      console.log("recieved response");
-      setMessage(response.data.msg);
-    } catch (error) {
-      setMessage("Error fetching message");
-    }
-  };
-
   return (
-    <div style={{ padding: 20 }}>
-      <h1>React + FastAPI</h1>
-      <button onClick={fetchMessage}>Get Message from FastAPI</button>
-      <p>{message}</p>
-    </div>
+    <HelmetProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 
