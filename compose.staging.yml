@@ -120,7 +120,7 @@ services:
     profiles:
       - test_e2e
     entrypoint: ["/scripts/wait-for-frontend.sh"]
-    command: sh -c "npx playwright test --reporter=list"
+    command: sh -c "npm tests:e2e"
 
   e2e_tests_watch: 
     <<: *test_base

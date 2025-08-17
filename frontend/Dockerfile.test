@@ -18,6 +18,6 @@ RUN echo "$INSTALL_PLAYWRIGHT"
 
 # Conditionally install Playwright and its deps
 RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
-      npm install -D @playwright/test@latest && \
+      npm install @playwright/test && \
       npx playwright install --with-deps; \
     fi
