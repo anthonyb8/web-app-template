@@ -22,8 +22,8 @@ jobs:
           key: ${{ secrets.PRODUCTION_KEY_PRIVATE  }}
           port: ${{  secrets.PRODUCTION_PORT  }}
           script: |
-            REPO_DIR="$HOME/worklog"
-            REPO_URL="git@github.com:anthonyb8/worklog.git"
+            REPO_DIR="$HOME/web-app-template"
+            REPO_URL="git@github.com:anthonyb8/web-app-template.git"
 
             # Clone the repo if it doesn't exist
             if [ ! -d "$REPO_DIR/.git" ]; then
@@ -59,11 +59,13 @@ jobs:
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
 
             # Nginx
-            CERTBOT_EMAIL=${{ secrets.CERTBOT_EMAIL }}
             DOMAIN_ROOT=${{ secrets.DOMAIN_ROOT }}
             DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
             SSL_CERT=${{ secrets.SSL_CERT }}
             SSL_CERT_KEY=${{secrets.SSL_CERT_KEY }}
+            CERTBOT_EMAIL=${{ secrets.CERTBOT_EMAIL }}
+            CERTBOT_CONTAINER=${{ secrets.CERTBOT_CONTAINER }}
+            CERTBOT_VOLUME=${{ secrets.CERTBOT_VOLUME }}
 
             EOF
 
