@@ -17,9 +17,8 @@ jobs:
           key: ${{ secrets.PRODUCTION_KEY_PRIVATE  }}
           port: ${{  secrets.PRODUCTION_PORT  }}
           script: |
-
-            REPO_DIR="$HOME/worklog"
-            REPO_URL="https://github.com/anthonyb8/worklog.git"
+            REPO_DIR="$HOME/web-app-template"
+            REPO_URL="git@github.com:anthonyb8/web-app-template.git"
 
             # Clone the repo if it doesn't exist
             if [ ! -d "$REPO_DIR/.git" ]; then
