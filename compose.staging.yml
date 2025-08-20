@@ -72,8 +72,8 @@ services:
       - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
       - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
       - APP_URL=http://frontend:5173 
-      - EMAIL=email@exmaple.com
-      - EMAIL_PASSWORD=password
+      - SUPPORT_EMAIL=email@exmaple.com
+      - SUPPORT_EMAIL_PASSWORD=password
       - DEBUG=True
     networks:
       - frontend-net 
