@@ -48,6 +48,8 @@ jobs:
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_TOKEN }}
             JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} 
             MFA_ENCRYPTION_KEY=${{ secrets.MFA_ENCRYPTION_KEY }}
+            SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
+            SUPPORT_EMAIL_PASSWORD=${{ secrets.SUPPORT_EMAIL_PASSWORD }} 
             APP_URL=${{ secrets.APP_URL }}
 
             # Database 

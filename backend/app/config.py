@@ -41,8 +41,8 @@ class Settings:
     debug: bool = os.getenv("DEBUG") == "True"
 
     # Email
-    email: str = get_env("EMAIL")
-    email_pw: str = get_env("EMAIL_PASSWORD")
+    email: str = get_env("SUPPORT_EMAIL")
+    email_pw: str = get_env("SUPPORT_EMAIL_PASSWORD")
 
 
 settings = Settings()
