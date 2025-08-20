@@ -16,7 +16,6 @@ function ForgotPassword() {
     try {
       const response = await AuthServices.forgot_password(email);
       setMessage(response.data?.message);
-      console.log(response);
     } catch (err) {
       setError("Invalid email");
     } finally {

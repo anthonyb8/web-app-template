@@ -359,19 +359,6 @@ class TokenService:
                 )
                 await conn.commit()
 
-    # @staticmethod
-    # async def get_verification_token(
-    #     token_type: str,
-    #     user_id: int,
-    # ) -> VerificationToken | None:
-    #     query = "SELECT * FROM verification_tokens WHERE user_id=%s AND token_type=%s;"
-    #
-    #     async with database.get_connection() as conn:
-    #         async with conn.cursor(aiomysql.DictCursor) as cursor:
-    #             await cursor.execute(query, (user_id, token_type))
-    #             row = await cursor.fetchone()
-    #             return VerificationToken(**row) if row else None
-
     @staticmethod
     async def delete_verification_token(user_id: int):
         query = """DELETE FROM verification_tokens WHERE user_id=%s;"""
@@ -404,12 +391,3 @@ class TokenService:
                 )
                 row = await cursor.fetchone()
                 return VerificationToken(**row) if row else None
-
-    # @staticmethod
-    # async def delete_verification_tokens(token_type: str, user_id: int):
-    #     query = """DELETE FROM verification_tokens WHERE token_type=%s AND user_id=%s;"""
-    #
-    #     async with database.get_connection() as conn:
-    #         async with conn.cursor() as cursor:
-    #             await cursor.execute(query, (token_type, user_id))
-    #             await conn.commit()

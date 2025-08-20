@@ -1,6 +1,5 @@
 import "./AuthForms.css";
 import { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { AuthServices } from "../../services/authService";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -40,7 +39,6 @@ function UnsuccessfullyVerified() {
 
     try {
       const response = await AuthServices.send_verification_email(email);
-      console.log(response);
     } catch (err) {
       setError("Invalid email");
     } finally {
@@ -87,7 +85,6 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     const verify_email = async () => {
       const response = await AuthServices.verify_email(token);
-      console.log(response);
 
       if (response.success) {
         setResult(true);

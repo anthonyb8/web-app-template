@@ -2,9 +2,6 @@ import AuthLayout from "../../layouts/AuthLayout";
 import MFASetupForm from "../../components/forms/MFASetupForm";
 
 export default function SetupMFAPage() {
-  // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState("");
-
   return (
     <AuthLayout
       title="Set Up MFA"

@@ -34,9 +34,6 @@ const AuthPage = ({ initialForm }) => {
   };
 
   const renderCurrentForm = () => {
-    {
-      console.log(currentStep);
-    }
     switch (currentStep) {
       case "login":
         return (
@@ -53,7 +50,6 @@ const AuthPage = ({ initialForm }) => {
                     type="button"
                     className="link-btn"
                     onClick={() => navigate("/register")}
-                    // disabled={loading}
                   >
                     Sign up
                   </button>

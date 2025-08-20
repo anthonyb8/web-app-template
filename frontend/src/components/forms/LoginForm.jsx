@@ -33,8 +33,7 @@ export default function LoginForm() {
     if (result.success) {
       tokenManager.setAccessToken(result.data?.access_token);
       setIsLoggedIn(true);
-      console.log(result.data);
-      // setMfaSetup(result.data?.mfa_setup));
+
       if (!result.data?.mfa_setup) {
         setIsMfaSetup(false);
         navigate("/setup-mfa");
@@ -105,5 +104,3 @@ export default function LoginForm() {
     </form>
   );
 }
-
-// export default LoginForm;

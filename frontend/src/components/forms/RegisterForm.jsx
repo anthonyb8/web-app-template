@@ -18,7 +18,6 @@ const RegisterForm = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    console.log("Updated");
     setError("");
   };
 
@@ -28,10 +27,10 @@ const RegisterForm = () => {
       return false;
     }
 
-    // if (formData.password.length < 8) {
-    //   setError("Password must be at least 8 characters long");
-    //   return false;
-    // }
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return false;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
@@ -48,12 +47,10 @@ const RegisterForm = () => {
     setLoading(true);
     setError("");
 
-    console.log("fuck you");
     const result = await AuthServices.register(
       formData.email,
       formData.password,
     );
-    console.log(`Result: ${result}`);
 
     if (result.success) {
       navigate("/login");
@@ -62,8 +59,6 @@ const RegisterForm = () => {
         setError(result.message || "Invalid credentials.");
       } else {
         setError(result.message);
-
-        // setError("Registration failed. Please try again.");
       }
     }
     setLoading(false);

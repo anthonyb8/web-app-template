@@ -1,12 +1,10 @@
-from datetime import timedelta
-from app.auth.services import TokenService, UserService, send_verify_email_msg
+from app.auth.services import TokenService, UserService
 from app.auth.schemas import (
     Email,
     ForgotPassword,
     RegisterRequest,
     User,
     UserResponse,
-    UserUpdate,
     VerificationToken,
 )
 from fastapi import APIRouter, Depends, HTTPException, status

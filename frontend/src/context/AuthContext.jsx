@@ -19,7 +19,6 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
     setIsLoggedIn(true);
     tokenManager.setAccessToken(accessToken);
-    console.log("authtenticated");
 
     if (refreshTimer) {
       clearTimeout(refreshTimer);
@@ -59,8 +58,6 @@ export function AuthProvider({ children }) {
 
     try {
       const response = await AuthServices.refresh_token();
-      console.log("testing");
-      console.log(response);
       if (response.success) {
         const { access_token, expires_at } = response.data;
         startTokenRefreshCycle(access_token, expires_at);

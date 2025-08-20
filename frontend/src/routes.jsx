@@ -16,7 +16,6 @@ import Account from "./pages/home/Account";
 function LoginProtectedLayout() {
   const { isLoggedIn, isMfaSetup } = useAuth();
   const location = useLocation();
-  console.log(isLoggedIn, isMfaSetup);
 
   if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -51,8 +50,6 @@ function ProtectedLayout() {
 }
 
 function AppRoutes() {
-  // const { isAuthenticated } = useAuth();
-  console.log("h7llo7");
   return (
     <Routes>
       {/* Public routes */}
