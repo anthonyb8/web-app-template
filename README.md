@@ -179,12 +179,12 @@ Your app will be live at `https://yourdomain.com` with:
 ./scripts/run test integration backend
 ./scripts/run test integration frontend
 
-# E2E tests with Playwright
+# E2E tests
 ./scripts/run test e2e
 
 # PLaywright with UI
 ./scripts/run dev
-npx playwright test --ui
+./scripts/run playwright
 ```
 
 ## ✅ Customize for Your App

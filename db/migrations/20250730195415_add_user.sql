@@ -46,3 +46,4 @@ CREATE TABLE IF NOT EXISTS recovery_codes (
 DROP TABLE user;
 DROP TABLE refresh_tokens;
 DROP TABLE verification_tokens;
+DROP TABLE recovery_codes;

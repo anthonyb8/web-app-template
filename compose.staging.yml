@@ -56,8 +56,6 @@ services:
     build: 
       context: ./backend
       dockerfile : Dockerfile.test
-    # env_file: 
-    #     - .env 
     environment:
       - MYSQL_HOST=mysql_staging
       - MYSQL_PORT=3306
@@ -127,13 +125,10 @@ services:
     profiles:
       - test_e2e_watch
     entrypoint: ["/scripts/wait-for-frontend.sh"]
-    command: |
-      sh -c "npm install && npx playwright install --with-deps && npx nodemon \
-        --delay 5 \
-        --watch tests/e2e \
-        --watch src \
-        --ext js,ts,jsx \
-        --exec 'sh -c \"/scripts/wait-for-frontend.sh && npx playwright test\"'"
+    command: >
+      sh -c "npm install && 
+             npx playwright install --with-deps && 
+             npx nodemon --delay 5 --watch tests/e2e --watch src --ext js,ts,jsx --exec 'sh -c \"/scripts/wait-for-frontend.sh && npx playwright test\"'"
 
 volumes: 
   mysql_test_data:
