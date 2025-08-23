@@ -351,16 +351,19 @@ test.describe("Recover Codes Page", () => {
     await page.getByPlaceholder("Enter your email").fill(email);
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: "Sign In" }).click();
+    await page.waitForURL(url("/mfa-selection"));
 
     // Selector
     await page.locator('input[name="mfaAuthenticatorOption"]').click();
     await page.getByRole("button", { type: "submit" }).click();
+    await page.waitForURL(url("/setup-authenticator-mfa"));
 
     // Setup
     const secret_cont = page.locator('span[name="secret"]');
     await page.getByRole("button", { name: "Show" }).click();
     const secret = await secret_cont.textContent();
     await page.locator('button[type="submit"]').click();
+    await page.waitForURL(url("/verify-authenticator-mfa"));
 
     // Verify
     const code = authenticator.generate(secret.trim());
@@ -391,6 +394,7 @@ test.describe("Recover Codes Page", () => {
     await page.locator('button[name="useRecovery-btn"]').click();
 
     // Test
+    await page.waitForURL(url("/verify-recovery-code"));
     await page.locator('input[name="mfaCode"]').fill(recovery_code);
     await page.locator('button[type="submit"]').click();
 
