@@ -77,7 +77,7 @@ function UnsuccessfullyVerified() {
   );
 }
 
-export default function VerifyEmailPage() {
+export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const [result, setResult] = useState(false);
   const token = searchParams.get("token");

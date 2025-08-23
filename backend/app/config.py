@@ -21,9 +21,13 @@ class Settings:
     jwt_algorithm: str = get_env("JWT_ALGORITHM")
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+    temp_login_expire_minutes: int = 5
+    reset_pw_expire_hours: int = 1
+    verify_email_expire_day: int = 1
 
     # MFA
     mfa_secret_key: str = get_env("MFA_ENCRYPTION_KEY")
+    email_mfa_expire_minutes: int = 5
 
     # Database
     database_url: str = get_env("DATABASE_URL")
@@ -37,7 +41,7 @@ class Settings:
 
     # App
     app_url: str = get_env("APP_URL")
-    app_name: str = "Worklog"
+    app_name: str = get_env("APP_NAME")
     debug: bool = os.getenv("DEBUG") == "True"
 
     # Email

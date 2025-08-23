@@ -11,7 +11,12 @@ from app.auth.schemas import (
 )
 from app.auth.utils import SecurityService
 from app.database import database
-from app.auth.services import RecoveryCodeService, UserService, TokenService
+from app.auth.services import (
+    EmailMfaCodeService,
+    RecoveryCodeService,
+    UserService,
+    TokenService,
+)
 import datetime as dt
 from datetime import datetime, timedelta
 
@@ -56,7 +61,7 @@ class TestUserService(unittest.IsolatedAsyncioTestCase):
         update_user = UserUpdate()
         update_user.email = new_email
         update_user.last_login = last_login
-        update_user.mfa_enabled = True
+        update_user.authenticator_mfa_enabled = True
 
         await UserService.update_user(user.id, update_user)
 
@@ -65,7 +70,7 @@ class TestUserService(unittest.IsolatedAsyncioTestCase):
 
         assert user
         self.assertEqual(user.email, new_email)
-        self.assertEqual(user.mfa_enabled, True)
+        self.assertEqual(user.authenticator_mfa_enabled, True)
         self.assertIsNotNone(user.last_login)
 
         # Clean-up
@@ -103,6 +108,61 @@ class TestUserService(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(resp)
 
         # Clean-up
+        await UserService.delete_user(email, password)
+
+
+email = "test38@gmail.com"
+password = "test_password"
+
+
+class TestEmailMfaCodes(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        await database.connect()
+        asyncio.get_event_loop().set_debug(False)
+
+    async def asyncTearDown(self) -> None:
+        await database.disconnect()
+
+    async def test_create_mfa_codes(self):
+        user = await UserService.create_user(email, password)
+        code = await EmailMfaCodeService.create_email_mfa_code(
+            user.id, timedelta(minutes=5)
+        )
+
+        self.assertTrue(len(code) == 6)
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
+    async def test_verify_mfa_codes(self):
+        user = await UserService.create_user(email, password)
+        code = await EmailMfaCodeService.create_email_mfa_code(
+            user.id, timedelta(minutes=5)
+        )
+
+        # Test
+        result = await EmailMfaCodeService.verify_email_mfa_code(user.id, code)
+        self.assertTrue(result)
+
+        check_deleted = await EmailMfaCodeService.verify_email_mfa_code(
+            user.id, code
+        )
+        self.assertFalse(check_deleted)
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
+    async def test_expired_mfa_codes(self):
+        user = await UserService.create_user(email, password)
+        code = await EmailMfaCodeService.create_email_mfa_code(
+            user.id, timedelta(minutes=-5)
+        )
+
+        # Test
+        result = await EmailMfaCodeService.verify_email_mfa_code(user.id, code)
+        self.assertFalse(result)
+
+        # Cleanup
         await UserService.delete_user(email, password)
 
 

@@ -1,7 +1,7 @@
 import React from "react";
-import "./DashboardPage.css";
+import "./Dashboard.css";
 
-export default function DashboardPage() {
+export default function Dashboard() {
   return (
     <div className="dashboard-container">
       <h1 className="dashboard-title">Dashboard</h1>

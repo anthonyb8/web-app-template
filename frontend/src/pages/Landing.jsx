@@ -1,9 +1,9 @@
 import React from "react";
-import "./LandingPage.css";
+import "./Landing.css";
 import { useNavigate } from "react-router";
 import { Helmet } from "react-helmet-async";
 
-export default function LandingPage() {
+export default function Landing() {
   const navigate = useNavigate();
 
   return (

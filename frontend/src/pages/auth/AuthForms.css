@@ -169,3 +169,31 @@
     font-size: 1.5rem;
   }
 }
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton-input {
+  height: 2.5rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-btn {
+  height: 2.5rem;
+  width: 100px;
+}

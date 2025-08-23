@@ -1,0 +1,343 @@
+/* Recovery Codes Modal Styles */
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Modal Overlay - covers entire screen */
+.recovery-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: recovery-fade-in 0.3s ease-out;
+}
+
+/* Modal Content Container */
+.recovery-modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: recovery-slide-in 0.3s ease-out;
+  position: relative;
+}
+
+/* Modal Header */
+.recovery-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px 15px;
+  border-bottom: 1px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  background: white;
+  border-radius: 12px 12px 0 0;
+  z-index: 1;
+}
+
+.recovery-modal-title {
+  color: #333;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.recovery-close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.recovery-close-btn:hover {
+  background-color: #f5f5f5;
+  color: #333;
+  transform: scale(1.1);
+}
+
+/* Modal Body */
+.recovery-modal-body {
+  padding: 30px;
+}
+
+.recovery-modal-description {
+  color: #666;
+  margin: 0 0 30px 0;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Recovery Codes Grid */
+.recovery-codes-grid {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.recovery-codes-column {
+  flex: 1;
+  min-width: 200px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.recovery-code-item {
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid #dee2e6;
+  text-align: center;
+  font-weight: 500;
+  color: #495057;
+  user-select: all;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recovery-code-item:last-child {
+  border-bottom: none;
+}
+
+.recovery-code-item:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin: 0 -8px;
+  border-radius: 4px;
+}
+
+/* Action Buttons */
+.recovery-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.recovery-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.recovery-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.recovery-btn:active {
+  transform: translateY(0);
+}
+
+/* Button Variants */
+.recovery-btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.recovery-btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.recovery-btn-primary.copied {
+  background-color: #28a745;
+}
+
+.recovery-btn-primary.copied:hover {
+  background-color: #1e7e34;
+}
+
+.recovery-btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.recovery-btn-success:hover {
+  background-color: #1e7e34;
+}
+
+.recovery-btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.recovery-btn-secondary:hover {
+  background-color: #545b62;
+}
+
+/* Warning Message */
+.recovery-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.recovery-warning p {
+  margin: 0;
+  font-size: 14px;
+  color: #856404;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Modal Footer */
+.recovery-modal-footer {
+  padding: 20px 30px;
+  text-align: center;
+  border-top: 1px solid #e9ecef;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-radius: 0 0 12px 12px;
+}
+
+.recovery-done-btn {
+  padding: 15px 40px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.recovery-done-btn:hover {
+  background-color: #1e7e34;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.recovery-done-btn:active {
+  transform: translateY(0);
+}
+
+/* Animations */
+@keyframes recovery-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes recovery-slide-in {
+  from {
+    transform: translateY(-50px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .recovery-modal-content {
+    width: 95%;
+    max-height: 95vh;
+    margin: 10px;
+  }
+
+  .recovery-modal-header,
+  .recovery-modal-body,
+  .recovery-modal-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .recovery-modal-body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .recovery-codes-grid {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .recovery-codes-column {
+    min-width: 100%;
+  }
+
+  .recovery-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .recovery-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .recovery-done-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .recovery-modal-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .recovery-modal-header,
+  .recovery-modal-body,
+  .recovery-modal-footer {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .recovery-codes-column {
+    padding: 15px;
+  }
+
+  .recovery-code-item {
+    font-size: 12px;
+    padding: 6px 0;
+  }
+}

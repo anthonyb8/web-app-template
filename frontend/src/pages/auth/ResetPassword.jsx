@@ -1,14 +1,17 @@
 import "./AuthForms.css";
-import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import AuthLayout from "../../layouts/AuthLayout";
+import { useState } from "react";
 import { AuthServices } from "../../services/authService";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-const RegisterForm = () => {
+function ResetPasswordForm() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -22,11 +25,6 @@ const RegisterForm = () => {
   };
 
   const validateForm = () => {
-    if (!formData.email || !formData.password) {
-      setError("All fields are required");
-      return false;
-    }
-
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters long");
       return false;
@@ -47,10 +45,7 @@ const RegisterForm = () => {
     setLoading(true);
     setError("");
 
-    const result = await AuthServices.register(
-      formData.email,
-      formData.password,
-    );
+    const result = await AuthServices.reset_password(token, formData.password);
 
     if (result.success) {
       navigate("/login");
@@ -58,7 +53,7 @@ const RegisterForm = () => {
       if (result.status === 400 || result.status === 409) {
         setError(result.message || "Invalid credentials.");
       } else {
-        setError(result.message);
+        setError("Registration failed. Please try again.");
       }
     }
     setLoading(false);
@@ -67,21 +62,6 @@ const RegisterForm = () => {
   return (
     <form onSubmit={handleSubmit}>
       <div className="form-group">
-        <label htmlFor="email">Email Address</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          placeholder="Enter your email"
-          disabled={loading}
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="password">Password</label>
         <input
           type="password"
           id="password"
@@ -89,13 +69,12 @@ const RegisterForm = () => {
           value={formData.password}
           onChange={handleChange}
           required
-          placeholder="Create a password (min 8 characters)"
+          placeholder="New Password (min 8 characters)"
           disabled={loading}
         />
       </div>
 
       <div className="form-group">
-        <label htmlFor="confirmPassword">Confirm Password</label>
         <input
           type="password"
           id="confirmPassword"
@@ -103,7 +82,7 @@ const RegisterForm = () => {
           value={formData.confirmPassword}
           onChange={handleChange}
           required
-          placeholder="Confirm your password"
+          placeholder="Confirm password"
           disabled={loading}
         />
       </div>
@@ -111,10 +90,16 @@ const RegisterForm = () => {
       {error && <div className="error-message">{error}</div>}
 
       <button type="submit" className="submit-btn" disabled={loading}>
-        {loading ? "Creating Account..." : "Create Account"}
+        {loading ? "Resetting Password..." : "Reset Password"}
       </button>
     </form>
   );
-};
+}
 
-export default RegisterForm;
+export default function ResetPassword() {
+  return (
+    <AuthLayout title="Reset Password" subtitle="Enter your new password.">
+      <ResetPasswordForm />
+    </AuthLayout>
+  );
+}

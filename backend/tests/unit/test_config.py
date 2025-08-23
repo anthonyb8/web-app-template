@@ -19,6 +19,7 @@ class TestSettings(unittest.TestCase):
             "ALLOWED_ORIGINS": "http://localhost,http://example.com",
             "SUPPORT_EMAIL": "test@example.com",
             "SUPPORT_EMAIL_PASSWORD": "email_pass",
+            "APP_NAME": "test name",
             "DEBUG": "True",
         },
         clear=True,

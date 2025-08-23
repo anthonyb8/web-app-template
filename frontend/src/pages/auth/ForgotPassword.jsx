@@ -1,8 +1,9 @@
 import "./AuthForms.css";
 import { useState } from "react";
 import { AuthServices } from "../../services/authService";
+import AuthLayout from "../../layouts/AuthLayout";
 
-function ForgotPassword() {
+function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,4 +54,13 @@ function ForgotPassword() {
   );
 }
 
-export default ForgotPassword;
+export default function ForgotPassword() {
+  return (
+    <AuthLayout
+      title="Forgot Password"
+      subtitle="Enter your email address. If it's correct, we'll send you an email with password reset instructions."
+    >
+      <ForgotPasswordForm />
+    </AuthLayout>
+  );
+}

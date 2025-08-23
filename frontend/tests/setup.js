@@ -12,6 +12,16 @@ export const TestServices = {
     );
   },
 
+  send_email_mfa: async (email) => {
+    return apiCall(
+      () =>
+        api.post(`/testing/send-mfa-email`, {
+          email,
+        }),
+      "Send verification failed.",
+    );
+  },
+
   send_verification_email: async (email) => {
     return apiCall(
       () =>

@@ -6,6 +6,7 @@ import datetime as dt
 import string
 import pyotp
 import qrcode
+import random
 from io import BytesIO
 import base64
 import secrets
@@ -35,6 +36,11 @@ class SecurityService:
             return False
 
     # MFA handling
+    @staticmethod
+    def generate_email_mfa_code() -> str:
+        """Generate a 6-digit random code for email MFA"""
+        return "".join([str(random.randint(0, 9)) for _ in range(6)])
+
     @staticmethod
     def generate_mfa_secret() -> str:
         return pyotp.random_base32()

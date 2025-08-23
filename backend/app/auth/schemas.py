@@ -18,7 +18,7 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
-    mfa_setup: bool = False
+    authenticator_mfa_setup: bool = False
     mfa_required: bool = True
     expires_at: datetime
     token_type: str = "bearer"
@@ -40,7 +40,13 @@ class ResetPassword(BaseModel):
 class MFASetupResponse(BaseModel):
     secret: str
     qr_code: str
-    recovery_codes: List[str]
+
+
+class MFAVerfiedResponse(BaseModel):
+    recovery_codes: Optional[List[str]]
+    access_token: str
+    expires_at: datetime
+    token_type: str = "bearer"
 
 
 class MFAVerifiactionCode(BaseModel):
@@ -70,7 +76,7 @@ class User(BaseModel):
     id: int
     email: str
     password_hash: str
-    mfa_enabled: bool
+    authenticator_mfa_enabled: bool
     mfa_secret: Optional[str] = None
     is_verified: bool
     created_at: datetime
@@ -84,7 +90,7 @@ class User(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
-    mfa_enabled: bool
+    authenticator_mfa_enabled: bool
     created_at: datetime
     last_login: Optional[datetime]
 
@@ -95,7 +101,7 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     email: Optional[str] = None
     password_hash: Optional[str] = None
-    mfa_enabled: Optional[bool] = None
+    authenticator_mfa_enabled: Optional[bool] = None
     mfa_secret: Optional[str] = None
     is_verified: Optional[bool] = None
     created_at: Optional[datetime] = None

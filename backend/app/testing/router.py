@@ -1,4 +1,4 @@
-from app.auth.services import TokenService, UserService
+from app.auth.services import EmailMfaCodeService, TokenService, UserService
 from app.auth.schemas import (
     Email,
     ForgotPassword,
@@ -10,6 +10,7 @@ from app.auth.schemas import (
 from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import datetime, timedelta
 from app.auth.utils import SecurityService
+from app.config import settings
 from app.dependencies import get_current_user
 import datetime as dt
 
@@ -34,7 +35,8 @@ async def test_register(data: RegisterRequest):
         user_id=user.id,
         token_hash=SecurityService.hash_token(token),
         token_type="email_verification",
-        expires_at=datetime.now(dt.timezone.utc) + timedelta(days=1),
+        expires_at=datetime.now(dt.timezone.utc)
+        + timedelta(days=settings.verify_email_expire_day),
     )
     await TokenService.create_verification_token(verification_token)
 
@@ -53,7 +55,8 @@ async def forgot_password(data: ForgotPassword):
         user_id=user.id,
         token_hash=SecurityService.hash_token(token),
         token_type="password_reset",
-        expires_at=datetime.now(dt.timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(dt.timezone.utc)
+        + timedelta(hours=settings.reset_pw_expire_hours),
     )
 
     await TokenService.create_verification_token(reset_token)
@@ -81,11 +84,31 @@ async def send_verification(email: Email):
         user_id=user.id,
         token_hash=SecurityService.hash_token(token),
         token_type="email_verification",
-        expires_at=datetime.now(dt.timezone.utc) + timedelta(days=1),
+        expires_at=datetime.now(dt.timezone.utc)
+        + timedelta(days=settings.verify_email_expire_day),
     )
     await TokenService.create_verification_token(verification_token)
 
     return {"message": "If email exists reset link sent.", "token": token}
+
+
+@router.post("/send-mfa-email")
+async def send_mfa_email(email: Email):
+    user = await UserService.get_user_by_email(email.email)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email.",
+        )
+    code = await EmailMfaCodeService.create_email_mfa_code(
+        user.id, timedelta(minutes=settings.email_mfa_expire_minutes)
+    )
+
+    return {
+        "message": "MFA code sent successful. Check your email to verify.",
+        "code": code,
+    }
 
 
 @router.post("/delete-user")

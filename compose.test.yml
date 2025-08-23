@@ -16,6 +16,7 @@ x-backend-base: &backend_base
     - JWT_ACCESS_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
     - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
     - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
+    - APP_NAME=testing
     - APP_URL=http://localhost:8001 
   networks:
       - frontend-net 
@@ -84,6 +85,7 @@ services:
       - JWT_ACCESS_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
       - JWT_REFRESH_SECRET=STUFRZH-MKLFj4j-6c9Z50WNWkvd9uqiWQJOpeCtI9Q
       - MFA_ENCRYPTION_KEY=7CrUl1rG4NBNk4bSV2uU7RW79Z_dRdvrrZn3Eqgytqg=
+      - APP_NAME=dummy
       - APP_URL=http://localhost:5174 
       - DEBUG=True
     volumes:

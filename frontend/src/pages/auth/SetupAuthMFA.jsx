@@ -5,12 +5,13 @@ import { MdContentCopy, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { tokenManager } from "../../tokenManager";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import AuthLayout from "../../layouts/AuthLayout";
 
-export default function MFASetupPage() {
+function SetupAuthMFAForm() {
   const navigate = useNavigate();
   const [qr, setQr] = useState("");
   const [secret, setSecret] = useState("");
-  const { setIsMfaSetup } = useAuth();
+  const { setIsAuthenticatorMfaSetup } = useAuth();
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function MFASetupPage() {
 
   useEffect(() => {
     async function fetchQr() {
-      const result = await AuthServices.setup_mfa();
+      const result = await AuthServices.setup_authenticator_mfa();
 
       if (result.success) {
         setQr(result.data?.qr_code);
@@ -49,9 +50,9 @@ export default function MFASetupPage() {
     setLoading(true);
     setError("");
 
-    setIsMfaSetup(true);
+    setIsAuthenticatorMfaSetup(true);
 
-    navigate("/verify-mfa");
+    navigate("/verify-authenticator-mfa");
     setLoading(false);
   };
 
@@ -121,5 +122,16 @@ export default function MFASetupPage() {
         {loading ? "Continuing..." : "Continue"}
       </button>
     </form>
+  );
+}
+
+export default function SetupAuthMFA() {
+  return (
+    <AuthLayout
+      title="Set Up MFA"
+      subtitle="Scan the QR code and enter the 6-digit code from your authenticator app"
+    >
+      <SetupAuthMFAForm />
+    </AuthLayout>
   );
 }

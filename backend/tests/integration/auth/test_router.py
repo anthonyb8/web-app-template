@@ -24,18 +24,20 @@ from datetime import datetime
 from app.config import settings
 from app.dependencies import get_current_user, get_user_pending_mfa
 from app.auth.router import (
-    disable_mfa,
+    disable_authenticator_mfa,
     login,
     logout,
     refresh_token,
     regenerate_recovery_codes,
     register,
+    send_email_mfa_code,
     send_verification_email,
-    setup_mfa,
+    setup_authenticator_mfa,
+    verify_authenticator_mfa,
     verify_email,
-    verify_mfa,
     forgot_password,
     reset_password,
+    verify_email_mfa,
     verify_recovery_code,
 )
 
@@ -45,6 +47,7 @@ base_url = "http://localhost:8001"
 
 user_create = RegisterRequest(email=email, password=password)
 login_request = LoginRequest(email=email, password=password)
+
 mfa_req = "123456"
 
 
@@ -111,6 +114,39 @@ async def mock_forgot_password(mock_email_service_class) -> str:
 
 
 @patch("app.auth.services.EmailService", new_callable=MagicMock)
+async def mock_mfa_email(user, mock_email_service_class) -> str:
+    # Prepare a mock instance to replace EmailService()
+    mock_email_service = MagicMock()
+    mock_email_service.recipient.return_value = mock_email_service
+    mock_email_service.subject.return_value = mock_email_service
+
+    # We'll extract the token from here
+    captured_token = {}
+
+    def mock_body(message_obj):
+        # Extract token from the HTML content in message_obj.msg
+        html_content = message_obj.msg
+        # Look for the verification URL in the HTML
+        import re
+
+        match = re.search(
+            r'<div class="verification-code">([^<]+)</div>', html_content
+        )
+        if match:
+            captured_token["code"] = match.group(1)
+        return mock_email_service
+
+    mock_email_service.body.side_effect = mock_body
+    mock_email_service.send.return_value = None
+
+    # This makes EmailService() return our mock instance
+    mock_email_service_class.return_value = mock_email_service
+
+    await send_email_mfa_code(user)
+    return captured_token["code"]
+
+
+@patch("app.auth.services.EmailService", new_callable=MagicMock)
 async def mock_register(mock_email_service_class) -> str:
     # Prepare a mock instance to replace EmailService()
     mock_email_service = MagicMock()
@@ -158,7 +194,7 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         now = datetime.now(dt.timezone.utc)
 
         self.assertEqual(response.email, email)
-        self.assertEqual(response.mfa_enabled, False)
+        self.assertEqual(response.authenticator_mfa_enabled, False)
         self.assertEqual(response.last_login, None)
         self.assertEqual(now.date(), response.created_at.date())
         self.assertEqual(now.hour, response.created_at.hour)
@@ -180,28 +216,6 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         self.assertIn(
             "email already registered", str(cm.exception.detail).lower()
         )
-
-        # Cleanup
-        await UserService.delete_user(email, password)
-
-    # verify email
-    async def test_verify_email(self):
-        token = await mock_register()
-
-        response = await verify_email(token)
-        self.assertEqual(response["message"], "Email verified successfully")
-
-        # Cleanup
-        await UserService.delete_user(email, password)
-
-    async def test_verify_email_unsuccessful(self):
-        await mock_register()
-
-        with self.assertRaises(HTTPException) as cm:
-            await verify_email("invalid")
-
-        self.assertEqual(cm.exception.status_code, 400)
-        self.assertIn("Invalid or expired token", str(cm.exception.detail))
 
         # Cleanup
         await UserService.delete_user(email, password)
@@ -229,6 +243,28 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         # Cleanup
         await UserService.delete_user(email, password)
 
+    # verify email
+    async def test_verify_email(self):
+        token = await mock_register()
+
+        response = await verify_email(token)
+        self.assertEqual(response["message"], "Email verified successfully")
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
+    async def test_verify_email_unsuccessful(self):
+        await mock_register()
+
+        with self.assertRaises(HTTPException) as cm:
+            await verify_email("invalid")
+
+        self.assertEqual(cm.exception.status_code, 400)
+        self.assertIn("Invalid or expired token", str(cm.exception.detail))
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
     # login
     async def test_login_success(self):
         token = await mock_register()
@@ -243,7 +279,7 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
             algorithms=settings.jwt_algorithm,
         )
 
-        self.assertEqual(response.mfa_setup, False)
+        self.assertEqual(response.authenticator_mfa_setup, False)
         self.assertEqual(response.mfa_required, True)
         self.assertEqual(payload["auth"], False)
 
@@ -332,8 +368,8 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         # Cleanup
         await UserService.delete_user(email, password)
 
-    # setup mfa
-    async def test_setup_mfa_success(self):
+    # setup authenticator mfa
+    async def test_setup_authenticator_mfa_success(self):
         token = await mock_register()
         await verify_email(token)
         response = await login(login_request)
@@ -346,10 +382,9 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         user = await get_user_pending_mfa(credentials=credentials)
 
         # Test
-        response = await setup_mfa(user)
+        response = await setup_authenticator_mfa(user)
         self.assertIsNotNone(response.secret)
         self.assertIsNotNone(response.qr_code)
-        self.assertIsNotNone(response.recovery_codes)
 
         updated_user = await UserService.get_user_by_email(email)
         self.assertEqual(
@@ -360,8 +395,8 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         # Cleanup
         await UserService.delete_user(email, password)
 
-    # verify mfa
-    async def test_verify_mfa_success(self):
+    # verify authenticator  mfa
+    async def test_verify_authenticator_mfa_success(self):
         token = await mock_register()
         await verify_email(token)
         response = await login(login_request)
@@ -372,19 +407,20 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        response = await setup_mfa(user)
+        response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(response.secret)
         code = totp.now()
 
         # Test
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        result = await verify_mfa(
+        result = await verify_authenticator_mfa(
             MFAVerifiactionCode(code=code), response, user
         )
 
         self.assertIsNotNone(result.access_token)
         self.assertIsNotNone(result.expires_at)
+        self.assertIsNotNone(result.recovery_codes)
         self.assertEqual(result.token_type, "bearer")
 
         # Refresh token
@@ -401,12 +437,12 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
 
         # User
         user = await UserService.get_user_by_email(email)
-        self.assertTrue(user.mfa_enabled)
+        self.assertTrue(user.authenticator_mfa_enabled)
 
         # Cleanup
         await UserService.delete_user(email, password)
 
-    async def test_verify_mfa_before_setup(self):
+    async def test_verify_authenticator_mfa_before_setup(self):
         token = await mock_register()
         await verify_email(token)
         response = await login(login_request)
@@ -420,10 +456,102 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         response = Response()
         # Test
         with self.assertRaises(HTTPException) as cm:
-            await verify_mfa(mfa_req, response, user)
+            await verify_authenticator_mfa(mfa_req, response, user)
 
         self.assertEqual(cm.exception.status_code, 400)
         self.assertIn("MFA not set up", str(cm.exception.detail))
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
+    # send mfa code email
+    @patch("app.auth.services.EmailService.send", new_callable=MagicMock)
+    async def test_send_mfa_email(self, _):
+        await mock_register()
+        token = await mock_send_verification_email()
+        await verify_email(token)
+
+        response = await login(login_request)
+
+        credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=response.access_token,
+        )
+        user = await get_user_pending_mfa(credentials=credentials)
+
+        result = await send_email_mfa_code(user)
+        self.assertEqual(
+            result["message"],
+            "MFA code sent successful. Check your email to verify.",
+        )
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
+    # verify  email  mfa
+    async def test_verify_email_mfa_success(self):
+        token = await mock_register()
+        await verify_email(token)
+        response = await login(login_request)
+
+        credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=response.access_token,
+        )
+
+        user = await get_user_pending_mfa(credentials=credentials)
+        code = await mock_mfa_email(user)
+
+        # Test
+        response = Response()
+        result = await verify_email_mfa(
+            MFAVerifiactionCode(code=code), response, user
+        )
+
+        self.assertIsNotNone(result.access_token)
+        self.assertIsNotNone(result.expires_at)
+        self.assertIsNone(result.recovery_codes)
+        self.assertEqual(result.token_type, "bearer")
+
+        # Refresh token
+        set_cookie_header = response.headers.get("set-cookie")
+        if "refresh_token=" in set_cookie_header:
+            token_part = set_cookie_header.split("refresh_token=")[1]
+            actual_token = token_part.split(";")[0]
+
+            token = await TokenService.get_refresh_token(actual_token)
+            self.assertEqual(
+                token.token_hash,
+                SecurityService.hash_token(actual_token),
+            )
+
+        # User
+        user = await UserService.get_user_by_email(email)
+        self.assertFalse(user.authenticator_mfa_enabled)
+
+        # Cleanup
+        await UserService.delete_user(email, password)
+
+    async def test_verify_email_invalid(self):
+        token = await mock_register()
+        await verify_email(token)
+        response = await login(login_request)
+
+        credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=response.access_token,
+        )
+
+        user = await get_user_pending_mfa(credentials=credentials)
+
+        # Test
+        with self.assertRaises(HTTPException) as cm:
+            await verify_email_mfa(
+                MFAVerifiactionCode(code="123456"), Response(), user
+            )
+
+        self.assertEqual(cm.exception.status_code, 400)
+        self.assertIn("Invalid MFA code", str(cm.exception.detail))
 
         # Cleanup
         await UserService.delete_user(email, password)
@@ -440,19 +568,25 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        setup_response = await setup_mfa(user)
+        setup_response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(setup_response.secret)
         code = totp.now()
 
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        _ = await verify_mfa(MFAVerifiactionCode(code=code), response, user)
+        verify_response = await verify_authenticator_mfa(
+            MFAVerifiactionCode(code=code), response, user
+        )
+
+        if not verify_response.recovery_codes:
+            raise Exception("Should be recovery codes. ")
 
         # Test
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
+
         _ = await verify_recovery_code(
-            MFAVerifiactionCode(code=setup_response.recovery_codes[0]),
+            MFAVerifiactionCode(code=verify_response.recovery_codes[0]),
             response,
             user,
         )
@@ -482,9 +616,10 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
             credentials=response.access_token,
         )
 
-        user = await get_user_pending_mfa(credentials=credentials)
-        response = Response()
         # Test
+        response = Response()
+        user = await get_user_pending_mfa(credentials=credentials)
+
         with self.assertRaises(HTTPException) as cm:
             await verify_recovery_code(
                 MFAVerifiactionCode(code="12345678"), response, user
@@ -508,15 +643,18 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        setup_response = await setup_mfa(user)
+        setup_response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(setup_response.secret)
         code = totp.now()
 
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        result = await verify_mfa(
+        result = await verify_authenticator_mfa(
             MFAVerifiactionCode(code=code), response, user
         )
+
+        if not result.recovery_codes:
+            raise Exception("Should be recovery codes. ")
 
         credentials = HTTPAuthorizationCredentials(
             scheme="Bearer",
@@ -526,14 +664,14 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         user = await get_current_user(credentials=credentials)
 
         # Test
-        for c in setup_response.recovery_codes:
+        for c in result.recovery_codes:
             self.assertTrue(
                 await RecoveryCodeService.verify_recovery_code(user.id, c)
             )
 
         new_codes = await regenerate_recovery_codes(user)
 
-        for c in setup_response.recovery_codes:
+        for c in result.recovery_codes:
             self.assertFalse(
                 await RecoveryCodeService.verify_recovery_code(user.id, c)
             )
@@ -557,13 +695,13 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        setup_response = await setup_mfa(user)
+        setup_response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(setup_response.secret)
         code = totp.now()
 
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        result = await verify_mfa(
+        result = await verify_authenticator_mfa(
             MFAVerifiactionCode(code=code), response, user
         )
 
@@ -573,7 +711,7 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_current_user(credentials=credentials)
-        user.mfa_enabled = False
+        user.authenticator_mfa_enabled = False
 
         # Test
         with self.assertRaises(HTTPException) as cm:
@@ -586,7 +724,7 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         await UserService.delete_user(email, password)
 
     # disable mfa
-    async def test_disable_mfa_success(self):
+    async def test_disable_authenticator_mfa_success(self):
         token = await mock_register()
         await verify_email(token)
         response = await login(login_request)
@@ -597,13 +735,13 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        response = await setup_mfa(user)
+        response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(response.secret)
         code = totp.now()
 
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        result = await verify_mfa(
+        result = await verify_authenticator_mfa(
             MFAVerifiactionCode(code=code), response, user
         )
         user = await UserService.get_user_by_email(email)
@@ -615,9 +753,11 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_current_user(credentials=credentials)
-        response = await disable_mfa(MFAVerifiactionCode(code=code), user)
+        response = await disable_authenticator_mfa(
+            MFAVerifiactionCode(code=code), user
+        )
         user = await get_current_user(credentials=credentials)
-        self.assertFalse(user.mfa_enabled)
+        self.assertFalse(user.authenticator_mfa_enabled)
         self.assertIsNone(user.mfa_secret)
 
         # Cleanup
@@ -635,13 +775,15 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        response = await setup_mfa(user)
+        response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(response.secret)
         code = totp.now()
 
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        await verify_mfa(MFAVerifiactionCode(code=code), response, user)
+        await verify_authenticator_mfa(
+            MFAVerifiactionCode(code=code), response, user
+        )
 
         # Refresh token
         set_cookie_header = response.headers.get("set-cookie")
@@ -686,13 +828,15 @@ class TestAuthRouter(unittest.IsolatedAsyncioTestCase):
         )
 
         user = await get_user_pending_mfa(credentials=credentials)
-        response = await setup_mfa(user)
+        response = await setup_authenticator_mfa(user)
         totp = pyotp.TOTP(response.secret)
         code = totp.now()
 
         user = await get_user_pending_mfa(credentials=credentials)
         response = Response()
-        await verify_mfa(MFAVerifiactionCode(code=code), response, user)
+        await verify_authenticator_mfa(
+            MFAVerifiactionCode(code=code), response, user
+        )
 
         # Refresh token
         set_cookie_header = response.headers.get("set-cookie")

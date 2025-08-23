@@ -61,14 +61,34 @@ export const AuthServices = {
     );
   },
 
-  setup_mfa: async () => {
-    return apiCall(() => api.post("/auth/setup-mfa"), "Setup-mfa failed.");
+  send_mfa_email: async () => {
+    return apiCall(
+      () => api.post("/auth/send-email-mfa-code", {}),
+      "Sending mfa email failed.",
+    );
   },
 
-  verify_mfa: async (code) => {
+  setup_authenticator_mfa: async () => {
+    return apiCall(
+      () => api.post("/auth/setup-authenticator-mfa"),
+      "Setup-mfa failed.",
+    );
+  },
+
+  verify_authenticator_mfa: async (code) => {
     return apiCall(
       () =>
-        api.post("/auth/verify-mfa", {
+        api.post("/auth/verify-authenticator-mfa", {
+          code,
+        }),
+      "Verify-mfa failed.",
+    );
+  },
+
+  verify_email_mfa: async (code) => {
+    return apiCall(
+      () =>
+        api.post("/auth/verify-email-mfa", {
           code,
         }),
       "Verify-mfa failed.",
@@ -92,10 +112,10 @@ export const AuthServices = {
     );
   },
 
-  disable_mfa: async (code) => {
+  disable_authenticator_mfa: async (code) => {
     return apiCall(
       () =>
-        api.post("/auth/disable-mfa", {
+        api.post("/auth/disable-authenticator-mfa", {
           code,
         }),
       "Verify-mfa failed.",

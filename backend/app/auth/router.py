@@ -10,9 +10,11 @@ from fastapi import (
 )
 from datetime import timedelta
 from app.auth.services import (
+    EmailMfaCodeService,
     RecoveryCodeService,
     UserService,
     TokenService,
+    send_email_mfa_code_msg,
     send_reset_password_msg,
     send_verify_email_msg,
     update_response_refresh_token,
@@ -21,6 +23,7 @@ from app.auth.schemas import (
     Email,
     ForgotPassword,
     LoginResponse,
+    MFAVerfiedResponse,
     MFAVerifiactionCode,
     RecoveryCodes,
     RegisterRequest,
@@ -119,24 +122,16 @@ async def login(data: LoginRequest):
     # Issue temp token good until MFA verified
     (temp_token, expiry) = SecurityService.generate_jwt(
         user.id,
-        timedelta(minutes=5),
+        timedelta(minutes=settings.temp_login_expire_minutes),
         False,
     )
 
-    if user.mfa_enabled:
-        return LoginResponse(
-            access_token=temp_token,
-            mfa_setup=True,
-            mfa_required=True,
-            expires_at=expiry,
-        )
-    else:
-        return LoginResponse(
-            access_token=temp_token,
-            mfa_setup=False,
-            mfa_required=True,
-            expires_at=expiry,
-        )
+    return LoginResponse(
+        access_token=temp_token,
+        authenticator_mfa_setup=user.authenticator_mfa_enabled,
+        mfa_required=True,
+        expires_at=expiry,
+    )
 
 
 @router.post("/forgot-password")
@@ -173,22 +168,25 @@ async def reset_password(data: ResetPassword):
     return {"message": "Password updated successfully"}
 
 
-@router.post("/setup-mfa", response_model=MFASetupResponse)
-async def setup_mfa(user: User = Depends(get_user_pending_mfa)):
-    if user.mfa_enabled:
+@router.post("/send-email-mfa-code")
+async def send_email_mfa_code(user: User = Depends(get_user_pending_mfa)):
+    await send_email_mfa_code_msg(user.id, user.email)
+
+    return {"message": "MFA code sent successful. Check your email to verify."}
+
+
+@router.post("/setup-authenticator-mfa", response_model=MFASetupResponse)
+async def setup_authenticator_mfa(user: User = Depends(get_user_pending_mfa)):
+    if user.authenticator_mfa_enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="MFA is already enabled",
+            detail="Authenticator MFA is already enabled",
         )
 
     # Generate secret and QR code
     secret = SecurityService.generate_mfa_secret()
     qr_code = SecurityService.generate_qr_code(user.email, secret)
 
-    # recovery_codes = SecurityService.generate_recovery_codes()
-    recovery_codes = await RecoveryCodeService.create_recovery_codes(user.id)
-
-    # Store secret (not enabled yet)
     user_update = UserUpdate()
     user_update.mfa_secret = SecurityService.encrypt_mfa_secret(secret)
     await UserService.update_user(user.id, user_update)
@@ -196,19 +194,19 @@ async def setup_mfa(user: User = Depends(get_user_pending_mfa)):
     return MFASetupResponse(
         secret=secret,
         qr_code=qr_code,
-        recovery_codes=recovery_codes,
     )
 
 
-@router.post("/verify-mfa", response_model=TokenResponse)
-async def verify_mfa(
+@router.post("/verify-authenticator-mfa", response_model=MFAVerfiedResponse)
+async def verify_authenticator_mfa(
     data: MFAVerifiactionCode,
     response: Response,
     user: User = Depends(get_user_pending_mfa),
 ):
     if not user.mfa_secret:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="MFA not set up"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Authenticator MFA not set up",
         )
 
     if not SecurityService.verify_totp(
@@ -218,11 +216,47 @@ async def verify_mfa(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid MFA code"
         )
 
+    await update_response_refresh_token(user.id, response)
+
+    (access_token, expiry) = SecurityService.generate_jwt(
+        user.id,
+        timedelta(minutes=settings.access_token_expire_minutes),
+        True,
+    )
+
     # If MFA wasn't enabled yet, enable it now
-    if not user.mfa_enabled:
+    if not user.authenticator_mfa_enabled:
+        recovery_codes = await RecoveryCodeService.create_recovery_codes(
+            user.id
+        )
+
         user_update = UserUpdate()
-        user_update.mfa_enabled = True
+        user_update.authenticator_mfa_enabled = True
         await UserService.update_user(user.id, user_update)
+
+        return MFAVerfiedResponse(
+            recovery_codes=recovery_codes,
+            access_token=access_token,
+            expires_at=expiry,
+        )
+
+    return MFAVerfiedResponse(
+        recovery_codes=None,
+        access_token=access_token,
+        expires_at=expiry,
+    )
+
+
+@router.post("/verify-email-mfa", response_model=MFAVerfiedResponse)
+async def verify_email_mfa(
+    data: MFAVerifiactionCode,
+    response: Response,
+    user: User = Depends(get_user_pending_mfa),
+):
+    if not await EmailMfaCodeService.verify_email_mfa_code(user.id, data.code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid MFA code"
+        )
 
     await update_response_refresh_token(user.id, response)
 
@@ -232,7 +266,11 @@ async def verify_mfa(
         True,
     )
 
-    return TokenResponse(access_token=access_token, expires_at=expiry)
+    return MFAVerfiedResponse(
+        recovery_codes=None,
+        access_token=access_token,
+        expires_at=expiry,
+    )
 
 
 @router.post("/verify-recovery-code", response_model=TokenResponse)
@@ -241,11 +279,11 @@ async def verify_recovery_code(
     response: Response,
     user: User = Depends(get_user_pending_mfa),
 ):
-    if not user.mfa_enabled:
+    if not user.authenticator_mfa_enabled:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="MFA not set up"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Authenticator MFA not set up",
         )
-
     if not await RecoveryCodeService.verify_recovery_code(user.id, data.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -267,7 +305,7 @@ async def verify_recovery_code(
 async def regenerate_recovery_codes(
     user: User = Depends(get_current_user),
 ):
-    if not user.mfa_enabled:
+    if not user.authenticator_mfa_enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="MFA not set up"
         )
@@ -283,8 +321,8 @@ async def regenerate_recovery_codes(
     return RecoveryCodes(codes=codes)
 
 
-@router.post("/disable-mfa")
-async def disable_mfa(
+@router.post("/disable-authenticator-mfa")
+async def disable_authenticator_mfa(
     data: MFAVerifiactionCode,
     user: User = Depends(get_current_user),
 ):
@@ -303,7 +341,7 @@ async def disable_mfa(
 
     # Disable MFA
     user_update = UserUpdate()
-    user_update.mfa_enabled = False
+    user_update.authenticator_mfa_enabled = False
     user_update.mfa_secret = None
     await UserService.update_user(user.id, user_update)
 
@@ -313,7 +351,6 @@ async def disable_mfa(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(request: Request):
     token = request.cookies.get("refresh_token")
-    # print(token)
 
     if not token:
         raise HTTPException(

@@ -9,8 +9,8 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
+  const [isAuthenticatorMfaSetup, setIsAuthenticatorMfaSetup] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isMfaSetup, setIsMfaSetup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [refreshTimer, setRefreshTimer] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
     tokenManager.setAccessToken(null);
     setIsAuthenticated(false);
     setIsLoggedIn(false);
-    setIsMfaSetup(false);
+    setIsAuthenticatorMfaSetup(false);
     setRefreshTimer(null);
     setIsRefreshing(false);
     navigate("/login");
@@ -93,8 +93,8 @@ export function AuthProvider({ children }) {
         isLoggedIn,
         setIsLoggedIn,
         isAuthenticated,
-        setIsMfaSetup,
-        isMfaSetup,
+        setIsAuthenticatorMfaSetup,
+        isAuthenticatorMfaSetup,
         logout,
         startTokenRefreshCycle,
       }}

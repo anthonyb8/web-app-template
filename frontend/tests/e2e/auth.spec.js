@@ -67,7 +67,7 @@ test.describe("Login Page", () => {
     const res = await page.getByRole("button", { name: "Sign In" }).click();
 
     // Expect an error message to appear
-    await expect(page).toHaveURL(url("/setup-mfa"));
+    await expect(page).toHaveURL(url("/mfa-selection"));
 
     await TestServices.deleteUser(email, password);
   });
@@ -86,70 +86,249 @@ test.describe("Login Page", () => {
   });
 });
 
-// Mfa Setup Page
-test.describe("Setup-MFA Page", () => {
-  test("login-successful", async ({ page }) => {
+// MFA Selection Page
+test.describe("MFA Selection Page", () => {
+  // Test
+  test("select-email-mfa", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    const verified = await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    const res = await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Test
+    await page.locator('input[name="mfaEmailOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Expect
+    await expect(page).toHaveURL(url("/verify-email-mfa"));
+
+    await TestServices.deleteUser(email, password);
+  });
+
+  test("select-authenticator-mfa", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    const verified = await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    const res = await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Test
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Expect
+    await expect(page).toHaveURL(url("/setup-authenticator-mfa"));
+
+    await TestServices.deleteUser(email, password);
+  });
+
+  test("select-authenticator-mfa-already-setup", async ({ page }) => {
+    // Register
     const result = await TestServices.createVerifiedUser(email, password);
     await AuthServices.verify_email(result.data?.token);
 
-    // login (need loggin token)
+    // Login
     await page.goto(url("/login"));
     await page.getByPlaceholder("Enter your email").fill(email);
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
-    // click button to show secret
-    const secret = page.locator('span[name="secret"]');
+    // Selector
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Setup
+    const secret_cont = page.locator('span[name="secret"]');
     await page.getByRole("button", { name: "Show" }).click();
-    const s_value = await secret.textContent();
-    expect(s_value).toBeTruthy();
+    const secret = await secret_cont.textContent();
+    await page.locator('button[type="submit"]').click();
+
+    // Verify
+    const code = authenticator.generate(secret.trim());
+    await page.locator('input[name="mfaCode"]').fill(code);
+    await page.locator('button[type="submit"]').click();
+    await page.locator('button[name="doneCodes"]').click();
+
+    // Logout
+    await page.locator('li[name="button-to-account"]').click();
+    await page.locator('button[name="logout-btn"]').click();
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    const res = await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Test
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Expect
+    await expect(page).toHaveURL(url("/verify-authenticator-mfa"));
+
+    await TestServices.deleteUser(email, password);
+  });
+});
+
+// MFA Authenticator Setup  Page
+test.describe("MFA Authenticator Setup Page", () => {
+  test("mfa-authenticator-successful", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Selector
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Setup
+    const secret_cont = page.locator('span[name="secret"]');
+    await page.getByRole("button", { name: "Show" }).click();
+    const secret = await secret_cont.textContent();
+    expect(secret).toBeTruthy();
 
     // Continue when mfa setup
     await page.locator('button[type="submit"]').click();
-    await expect(page).toHaveURL(url("/verify-mfa"));
+    await expect(page).toHaveURL(url("/verify-authenticator-mfa"));
+
+    await TestServices.deleteUser(email, password);
+  });
+});
+
+// Verify Authenticator page
+test.describe("Verify-Authenticator-MFA Page", () => {
+  test("verify-auth-successful", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Selector
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Setup
+    const secret_cont = page.locator('span[name="secret"]');
+    await page.getByRole("button", { name: "Show" }).click();
+    const secret = await secret_cont.textContent();
+    await page.locator('button[type="submit"]').click();
+
+    // Test
+    const code = authenticator.generate(secret.trim());
+    await page.locator('input[name="mfaCode"]').fill(code);
+    await page.locator('button[type="submit"]').click();
+    await page.locator('button[name="doneCodes"]').click();
+
+    // Expect
+    await expect(page).toHaveURL(url("/dashboard"));
+
+    await TestServices.deleteUser(email, password);
+  });
+
+  test("verify-auth-invalid", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Selector
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Setup
+    const secret_cont = page.locator('span[name="secret"]');
+    await page.getByRole("button", { name: "Show" }).click();
+    const secret = await secret_cont.textContent();
+    await page.locator('button[type="submit"]').click();
+
+    // Test
+    const code = authenticator.generate("RSLF7CSBTGRWU6KK5G34VXN7SB37D5RP");
+    await page.locator('input[name="mfaCode"]').fill(code);
+    await page.locator('button[type="submit"]').click();
+
+    // Expect
+    const errorMessage = page.getByText("Invalid MFA code");
+    await expect(errorMessage).toBeVisible();
 
     await TestServices.deleteUser(email, password);
   });
 });
 
 // Verify mfa page
-test.describe("Verify-MFA Page", () => {
-  test("verify-successful", async ({ page }) => {
+test.describe("Verify-Email-MFA Page", () => {
+  test("verify-email-successful", async ({ page }) => {
+    // Register
     const result = await TestServices.createVerifiedUser(email, password);
     await AuthServices.verify_email(result.data?.token);
 
+    // Login
     await page.goto(url("/login"));
     await page.getByPlaceholder("Enter your email").fill(email);
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
-    const secret_cont = page.locator('span[name="secret"]');
-    await page.getByRole("button", { name: "Show" }).click();
-    const secret = await secret_cont.textContent();
+    // Select Email Option
+    await page.locator('input[name="mfaEmailOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Test
+    const entry = page.locator('input[name="mfaCode"]');
+    await new Promise((r) => setTimeout(r, 1000)); // Delay for a second to let the new code settle
+    const res = await TestServices.send_email_mfa(email);
+
+    // console.log(code);
+    // await entry.type(code);
+    await entry.fill(res.data?.code);
     await page.locator('button[type="submit"]').click();
 
-    const code = authenticator.generate(secret.trim());
-    await page.locator('input[name="mfaCode"]').fill(code);
-    await page.locator('button[type="submit"]').click();
-
+    // Expect
     await expect(page).toHaveURL(url("/dashboard"));
 
     await TestServices.deleteUser(email, password);
   });
 
-  test("verify-invalid", async ({ page }) => {
+  test("verify-email-invalid", async ({ page }) => {
+    // Register
     const result = await TestServices.createVerifiedUser(email, password);
     await AuthServices.verify_email(result.data?.token);
 
+    // Login
     await page.goto(url("/login"));
     await page.getByPlaceholder("Enter your email").fill(email);
     await page.getByPlaceholder("Enter your password").fill(password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
-    await page.getByRole("button", { name: "Show" }).click();
-    await page.locator('button[type="submit"]').click();
+    // Select Email Option
+    await page.locator('input[name="mfaEmailOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
 
-    const code = authenticator.generate("RSLF7CSBTGRWU6KK5G34VXN7SB37D5RP");
+    // Test
+    const code = "123456";
     await page.locator('input[name="mfaCode"]').fill(code);
     await page.locator('button[type="submit"]').click();
 
@@ -160,23 +339,130 @@ test.describe("Verify-MFA Page", () => {
   });
 });
 
-// todo: How to test with a dummy email.
-// // Forgot Password Page
-// test.describe("Forgot Password Page", () => {
-//   test("forgot-password-submit", async ({ page }) => {
-//     const result = await TestServices.createVerifiedUser(email, password);
-//     await AuthServices.verify_email(result.data?.token);
-//
-//     await page.goto(url("/forgot-password"));
-//     await page.locator('input[name="email"]').fill(email);
-//     await page.locator('button[type="submit"]').click();
-//
-//     const message = page.locator('div[name="message"]');
-//     await expect(message).toBeVisible();
-//
-//     await TestServices.deleteUser(email, password);
-//   });
-// });
+// Recovery Code Page
+test.describe("Recover Codes Page", () => {
+  test("recovery-code-successful", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Selector
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Setup
+    const secret_cont = page.locator('span[name="secret"]');
+    await page.getByRole("button", { name: "Show" }).click();
+    const secret = await secret_cont.textContent();
+    await page.locator('button[type="submit"]').click();
+
+    // Verify
+    const code = authenticator.generate(secret.trim());
+    await page.locator('input[name="mfaCode"]').fill(code);
+    await page.locator('button[type="submit"]').click();
+
+    // Get Recovery Code
+    const recovery_code = await page
+      .locator('[data-testid="recovery-code-1"]')
+      .textContent();
+    await page.locator('button[name="doneCodes"]').click();
+
+    // Logout
+    await page.locator('li[name="button-to-account"]').click();
+    await page.locator('button[name="logout-btn"]').click();
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    const res = await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Select
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Click use code
+    await page.locator('button[name="useRecovery-btn"]').click();
+
+    // Test
+    await page.locator('input[name="mfaCode"]').fill(recovery_code);
+    await page.locator('button[type="submit"]').click();
+
+    // Expect
+    await expect(page).toHaveURL(url("/dashboard"));
+
+    await TestServices.deleteUser(email, password);
+  });
+
+  test("recovery-code-unsuccessful", async ({ page }) => {
+    // Register
+    const result = await TestServices.createVerifiedUser(email, password);
+    await AuthServices.verify_email(result.data?.token);
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Selector
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Setup
+    const secret_cont = page.locator('span[name="secret"]');
+    await page.getByRole("button", { name: "Show" }).click();
+    const secret = await secret_cont.textContent();
+    await page.locator('button[type="submit"]').click();
+
+    // Verify
+    const code = authenticator.generate(secret.trim());
+    await page.locator('input[name="mfaCode"]').fill(code);
+    await page.locator('button[type="submit"]').click();
+
+    // Get Recovery Code
+    const recovery_code = await page
+      .locator('[data-testid="recovery-code-1"]')
+      .textContent();
+    await page.locator('button[name="doneCodes"]').click();
+
+    // Logout
+    await page.locator('li[name="button-to-account"]').click();
+    await page.locator('button[name="logout-btn"]').click();
+
+    // Login
+    await page.goto(url("/login"));
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(password);
+    const res = await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Select
+    await page.locator('input[name="mfaAuthenticatorOption"]').click();
+    await page.getByRole("button", { type: "submit" }).click();
+
+    // Click use code
+    await page.locator('button[name="useRecovery-btn"]').click();
+
+    // Test
+    const invalid_code = "12345678";
+    const recoveryInput = page.locator('input[name="mfaCode"]');
+    await recoveryInput.waitFor();
+    await recoveryInput.fill(invalid_code);
+    await page.locator('button[type="submit"]').click();
+
+    // Expect
+    const errorMessage = page.getByText("Invalid recovery code.");
+    await expect(errorMessage).toBeVisible();
+
+    await TestServices.deleteUser(email, password);
+  });
+});
 
 // Reset Password Page
 test.describe("Reset Password Page", () => {
@@ -185,7 +471,6 @@ test.describe("Reset Password Page", () => {
     await AuthServices.verify_email(result.data?.token);
 
     const forgot_response = await TestServices.forgot_password(email);
-    console.log(forgot_response);
     const token = forgot_response.data?.token;
 
     await page.goto(url(`/reset-password?token=${token}`));
@@ -260,41 +545,3 @@ test.describe("Verify Email Page", () => {
     await expect(msg).toBeVisible();
   });
 });
-
-// // Send vefication Email Page
-// test.describe("Send Verfication Email Page", () => {
-//   // Test
-//   test("login-successful", async ({ page }) => {
-//     await TestServices.createVerifiedUser(email, password);
-//     const re
-//     // const verified = await AuthServices.verify_email(result.data?.token);
-//
-//     await page.goto(url("/login"));
-//     await page.getByPlaceholder("Enter your email").fill(email);
-//     await page.getByPlaceholder("Enter your password").fill(password);
-//     await page.getByRole("button", { name: "Sign In" }).click();
-//     // console.log(login);
-//
-//     await page.getByRole("button", { name: "secret" }).click();
-//
-//     const secret = await page.evaluate(() => navigator.clipboard.readText());
-//     // const secret = await page.evaluate(() => navigator.clipboard.readText());
-//     console.log(secret);
-//
-//     // await page.goto(url("/setup-mfa"));
-//     //
-//     // await page.getByPlaceholder("Enter your email").fill(email);
-//     // await page.getByPlaceholder("Enter your password").fill(password);
-//     //
-//     // const res = await page.getByRole("button", { name: "Sign In" }).click();
-//     //
-//     // // Expect an error message to appear
-//     // await expect(
-//     //   page.getByText(
-//     //     "Scan the QR code and enter the 6-digit code from your authenticator app",
-//     //   ),
-//     // ).toBeVisible();
-//
-//     await TestServices.deleteUser(email, password);
-//   });
-// });

@@ -37,7 +37,6 @@ export const apiCall = async (axiosCall, customErrorMessage = null) => {
     return {
       success: true,
       data: response.data || {},
-      // message: response.message || "",
     };
   } catch (error) {
     return {

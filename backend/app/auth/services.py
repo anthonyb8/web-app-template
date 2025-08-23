@@ -15,7 +15,11 @@ from app.auth.utils import SecurityService
 import datetime as dt
 from datetime import timedelta, datetime
 from app.config import settings
-from app.email.messages import ResetPasswordMessage, VerifyEmailMessage
+from app.email.messages import (
+    MfaEmailMessage,
+    ResetPasswordMessage,
+    VerifyEmailMessage,
+)
 from app.email.service import EmailService
 
 
@@ -57,7 +61,8 @@ async def send_verify_email_msg(user_id: int, email: str):
         user_id=user_id,
         token_hash=SecurityService.hash_token(token),
         token_type="email_verification",
-        expires_at=datetime.now(dt.timezone.utc) + timedelta(days=1),
+        expires_at=datetime.now(dt.timezone.utc)
+        + timedelta(days=settings.verify_email_expire_day),
     )
     await TokenService.create_verification_token(verification_token)
 
@@ -72,6 +77,20 @@ async def send_verify_email_msg(user_id: int, email: str):
     )
 
 
+async def send_email_mfa_code_msg(user_id: int, email: str):
+    code = await EmailMfaCodeService.create_email_mfa_code(
+        user_id, timedelta(minutes=settings.email_mfa_expire_minutes)
+    )
+
+    (
+        EmailService()
+        .recipient(email)
+        .subject("Verification Code")
+        .body(MfaEmailMessage(code))
+        .send()
+    )
+
+
 async def send_reset_password_msg(user_id: int, email: str):
     # delete if any token exists
     await TokenService.delete_verification_token(user_id)
@@ -82,7 +101,8 @@ async def send_reset_password_msg(user_id: int, email: str):
         user_id=user_id,
         token_hash=SecurityService.hash_token(token),
         token_type="password_reset",
-        expires_at=datetime.now(dt.timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(dt.timezone.utc)
+        + timedelta(hours=settings.reset_pw_expire_hours),
     )
 
     await TokenService.create_verification_token(reset_token)
@@ -154,7 +174,7 @@ class UserService:
                 user_id = cursor.lastrowid
 
                 # Fetch the complete user record
-                select_query = "SELECT id, email, mfa_enabled, created_at, last_login FROM users WHERE id = %s;"
+                select_query = "SELECT id, email, authenticator_mfa_enabled, created_at, last_login FROM users WHERE id = %s;"
                 await cursor.execute(select_query, (user_id,))
                 row = await cursor.fetchone()
 
@@ -214,6 +234,65 @@ class UserService:
                     )
                     result = await cursor.fetchone()
                     return result[0] == 0
+
+
+class EmailMfaCodeService:
+    @staticmethod
+    async def create_email_mfa_code(user_id: int, expire_in: timedelta) -> str:
+        await EmailMfaCodeService.delete_mfa_codes(user_id)
+
+        code = SecurityService.generate_email_mfa_code()
+        expires_at = datetime.now(dt.timezone.utc) + expire_in
+
+        query = "INSERT INTO email_mfa_codes (user_id, code_hash, expires_at) VALUES (%s, %s, %s);"
+        async with database.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    query,
+                    (
+                        user_id,
+                        SecurityService.hash_token(code),
+                        expires_at,
+                    ),
+                )
+
+                await conn.commit()
+
+                return code
+
+    @staticmethod
+    async def verify_email_mfa_code(user_id: int, code: str) -> bool:
+        query = "SELECT code_hash FROM email_mfa_codes WHERE user_id = %s AND code_hash = %s AND expires_at > UTC_TIMESTAMP();"
+        async with database.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    query, (user_id, SecurityService.hash_token(code))
+                )
+                row = await cursor.fetchone()
+
+                if row:
+                    # Delete the used code instead of marking as used
+                    await cursor.execute(
+                        "DELETE FROM email_mfa_codes WHERE user_id = %s AND code_hash = %s",
+                        (user_id, SecurityService.hash_token(code)),
+                    )
+                    return True
+
+                return False
+
+    @staticmethod
+    async def delete_mfa_codes(user_id: int):
+        query = "DELETE FROM email_mfa_codes WHERE user_id=%s;"
+        async with database.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(query, (user_id,))
+
+                await conn.commit()
+
+    # @staticmethod
+    # async def regenerate_mfa_code(user_id: int) -> List[str]:
+    #     await EmailMfaCodeService.delete_mfa_codes(user_id)
+    #     return await EmailMfaCodeService.create_email_mfa_code(user_id)
 
 
 class RecoveryCodeService:

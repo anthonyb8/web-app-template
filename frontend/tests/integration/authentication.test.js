@@ -175,7 +175,7 @@ describe("AuthServices.reset_passsword", () => {
   });
 });
 
-describe("AuthServices.setup_mfa", () => {
+describe("AuthServices.setup-authencticator-mfa", () => {
   // let token;
 
   beforeEach(async () => {
@@ -191,7 +191,7 @@ describe("AuthServices.setup_mfa", () => {
 
   it("setup_mfa_successful", async () => {
     // Test
-    const result = await AuthServices.setup_mfa();
+    const result = await AuthServices.setup_authenticator_mfa();
 
     // Validate
     expect(result.success).toBe(true);
@@ -202,7 +202,7 @@ describe("AuthServices.setup_mfa", () => {
   it("setup_mfa_invalid_token", async () => {
     // test
     tokenManager.setAccessToken("invalid_token");
-    const result = await AuthServices.setup_mfa();
+    const result = await AuthServices.setup_authenticator_mfa();
 
     // validate
     expect(result.success).toBe(false);
@@ -211,14 +211,14 @@ describe("AuthServices.setup_mfa", () => {
   });
 });
 
-describe("AuthServices.verify_mfa", () => {
+describe("AuthServices.verify-authenticator-mfa", () => {
   let secret;
   beforeEach(async () => {
     const result = await TestServices.createVerifiedUser(email, password);
     await AuthServices.verify_email(result.data?.token);
     const login_result = await AuthServices.login(email, password);
     tokenManager.setAccessToken(login_result.data?.access_token);
-    const setup_result = await AuthServices.setup_mfa();
+    const setup_result = await AuthServices.setup_authenticator_mfa();
     secret = setup_result.data?.secret;
   });
 
@@ -228,7 +228,7 @@ describe("AuthServices.verify_mfa", () => {
   it("verify_mfa_successful", async () => {
     // Test
     const code = authenticator.generate(secret);
-    const result = await AuthServices.verify_mfa(code);
+    const result = await AuthServices.verify_authenticator_mfa(code);
 
     // Validate
     expect(result.success).toBe(true);
@@ -239,7 +239,44 @@ describe("AuthServices.verify_mfa", () => {
 
   it("verify_mfa_invalid_code", async () => {
     // Test
-    const result = await AuthServices.verify_mfa("123456");
+    const result = await AuthServices.verify_authenticator_mfa("123456");
+
+    // validate
+    expect(result.success).toBe(false);
+    expect(result.status).toBe(400);
+    expect(result.message).toBe("Invalid MFA code");
+  });
+});
+
+describe("AuthServices.verify-email-mfa", () => {
+  let code;
+  beforeEach(async () => {
+    const result = await TestServices.createVerifiedUser(email, password);
+    await AuthServices.verify_email(result.data?.token);
+    const login_result = await AuthServices.login(email, password);
+    tokenManager.setAccessToken(login_result.data?.access_token);
+    const mfa_email = await TestServices.send_email_mfa(email);
+    code = mfa_email.data?.code;
+  });
+
+  afterEach(async () => {
+    await TestServices.deleteUser(email, password);
+  });
+  it("verify_mfa_email_successful", async () => {
+    // Test
+    const result = await AuthServices.verify_email_mfa(code);
+
+    // Validate
+    expect(result.success).toBe(true);
+    expect(result.data?.access_token).toBeTruthy();
+    expect(result.data?.expires_at).toBeTruthy();
+    expect(result.data?.recovery_codes).toBeFalsy();
+    expect(result.data?.token_type).toBe("bearer");
+  });
+
+  it("verify_email_mfa_invalid_code", async () => {
+    // Test
+    const result = await AuthServices.verify_email_mfa("123456");
 
     // validate
     expect(result.success).toBe(false);
@@ -250,15 +287,13 @@ describe("AuthServices.verify_mfa", () => {
 
 describe("AuthServices.verify-recovery-code", () => {
   let secret;
-  let codes;
   beforeEach(async () => {
     const result = await TestServices.createVerifiedUser(email, password);
     await AuthServices.verify_email(result.data?.token);
     const login_result = await AuthServices.login(email, password);
     tokenManager.setAccessToken(login_result.data?.access_token);
-    const setup_result = await AuthServices.setup_mfa();
+    const setup_result = await AuthServices.setup_authenticator_mfa();
     secret = setup_result.data?.secret;
-    codes = setup_result.data?.recovery_codes;
   });
 
   afterEach(async () => {
@@ -268,8 +303,10 @@ describe("AuthServices.verify-recovery-code", () => {
   it("verify_recovery_successful", async () => {
     // Test
     const code = authenticator.generate(secret);
-    const _ = await AuthServices.verify_mfa(code);
-    const result = await AuthServices.verify_recovery_code(codes[0]);
+    const verify_result = await AuthServices.verify_authenticator_mfa(code);
+    const result = await AuthServices.verify_recovery_code(
+      verify_result.data?.recovery_codes[0],
+    );
 
     // Validate
     expect(result.success).toBe(true);
@@ -285,7 +322,7 @@ describe("AuthServices.verify-recovery-code", () => {
     // validate
     expect(result.success).toBe(false);
     expect(result.status).toBe(400);
-    expect(result.message).toBe("MFA not set up");
+    expect(result.message).toBe("Authenticator MFA not set up");
   });
 });
 
@@ -296,7 +333,7 @@ describe("AuthServices.regenerate-recovery-codes", () => {
     await AuthServices.verify_email(result.data?.token);
     const login_result = await AuthServices.login(email, password);
     tokenManager.setAccessToken(login_result.data?.access_token);
-    const setup_result = await AuthServices.setup_mfa();
+    const setup_result = await AuthServices.setup_authenticator_mfa();
     secret = setup_result.data?.secret;
   });
 
@@ -307,7 +344,7 @@ describe("AuthServices.regenerate-recovery-codes", () => {
   it("regenerate-recovery-codes-success", async () => {
     // Test
     const code = authenticator.generate(secret);
-    const verify_result = await AuthServices.verify_mfa(code);
+    const verify_result = await AuthServices.verify_authenticator_mfa(code);
     tokenManager.setAccessToken(verify_result.data?.access_token);
 
     const result = await AuthServices.regenerate_recovery_codes();
@@ -328,7 +365,7 @@ describe("AuthServices.regenerate-recovery-codes", () => {
   });
 });
 
-describe("AuthServices.disable-mfa", () => {
+describe("AuthServices.disable-authenticator-mfa", () => {
   let secret;
 
   beforeEach(async () => {
@@ -336,7 +373,7 @@ describe("AuthServices.disable-mfa", () => {
     await AuthServices.verify_email(result.data?.token);
     const login_result = await AuthServices.login(email, password);
     tokenManager.setAccessToken(login_result.data?.access_token);
-    const setup_result = await AuthServices.setup_mfa();
+    const setup_result = await AuthServices.setup_authenticator_mfa();
     secret = setup_result.data?.secret;
   });
 
@@ -347,102 +384,16 @@ describe("AuthServices.disable-mfa", () => {
   it("disable-mfa-success", async () => {
     // Test
     const totp_code = authenticator.generate(secret);
-    const verify_result = await AuthServices.verify_mfa(totp_code);
+    const verify_result =
+      await AuthServices.verify_authenticator_mfa(totp_code);
     tokenManager.setAccessToken(verify_result.data?.access_token);
 
     const code = authenticator.generate(secret);
-    const result = await AuthServices.disable_mfa(code);
-
-    // Validate
-    expect(result.success).toBe(true);
-    expect(result.data?.message).toBe("MFA disabled successfully");
-  });
-
-  it("disable-mfa-unsuccess", async () => {
-    // Test
-    const result = await AuthServices.disable_mfa("123456");
+    const result = await AuthServices.disable_authenticator_mfa("123456");
 
     // validate
     expect(result.success).toBe(false);
-    expect(result.status).toBe(401);
-    expect(result.message).toBe("Invalid authentication credentials");
+    expect(result.status).toBe(400);
+    expect(result.message).toBe("Invalid MFA code");
   });
 });
-
-// // Todo : how to test refresh token with the cookies
-// describe("AuthServices.refresh_token", () => {
-//   let secret;
-//   let token;
-//   let cookieJar = ""; // Store cookies manually
-//
-//   beforeEach(async () => {
-//     const result = await TestServices.createVerifiedUser(email, password);
-//     await AuthServices.verify_email(result.data?.token);
-//     const login_result = await AuthServices.login(email, password);
-//     token = login_result.data?.access_token;
-//     tokenManager.setAccessToken(token);
-//     const setup_result = await AuthServices.setup_mfa();
-//     secret = setup_result.data?.secret;
-//   });
-//
-//   afterEach(async () => {
-//     await TestServices.deleteUser(email, password);
-//   });
-//
-//   it("refresh_token_successful", async () => {
-//     const code = authenticator.generate(secret);
-//
-//     // Verify MFA and capture cookies
-//     const response = await axios.post(
-//       `${BASE_URL}/auth/verify-mfa`,
-//       { code: code },
-//       {
-//         withCredentials: true,
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       },
-//     );
-//
-//     // Extract and store cookies manually
-//     const setCookieHeader = response.headers["set-cookie"];
-//     console.log(setCookieHeader);
-//
-//     if (setCookieHeader) {
-//       cookieJar = setCookieHeader
-//         .map((cookie) => cookie.split(";")[0]) // Get name=value part only
-//         .join("; ");
-//       console.log("Captured cookies:", cookieJar);
-//     }
-//
-//     // // Test
-//     const result = await AuthServices.refresh_token();
-//     console.log(result);
-//
-//     // Validate
-//     // expect(result.success).toBe(true);
-//     // expect(result.data?.access_token).toBeTruthy();
-//     // expect(result.data?.refresh_token).toBeTruthy();
-//     // expect(result.data?.expires_at).toBeTruthy();
-//     // expect(result.data?.token_type).toBe("bearer");
-//
-//     // Clean up
-//     // await delete_user(email, password);
-//   });
-//   // it("refresh_token_invalid_code", async () => {
-//   //   await AuthServices.register(email, password);
-//   //   const login_result = await AuthServices.login(email, password);
-//   //   const token = login_result.data?.access_token;
-//   //   await AuthServices.setup_mfa(token);
-//   //
-//   //   // Test
-//   //   const result = await AuthServices.verify_mfa(token, "123456");
-//   //
-//   //   // validate
-//   //   // expect(result.success).toBe(false);
-//   //   // expect(result.status).toBe(400);
-//   //   // expect(result.message).toBe("Invalid MFA code");
-//   //
-//   //   await delete_user(email, password);
-//   // });
-// });

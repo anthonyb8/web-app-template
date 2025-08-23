@@ -1,15 +1,16 @@
 import "./AuthForms.css";
 import React, { useState } from "react";
+import AuthLayout from "../../layouts/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthServices } from "../../services/authService";
 import { tokenManager } from "../../tokenManager";
-import { useNavigate } from "react-router-dom";
 
-export default function LoginForm() {
+function LoginForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { setIsLoggedIn, setIsMfaSetup } = useAuth();
+  const { setIsLoggedIn, setIsAuthenticatorMfaSetup } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -33,21 +34,14 @@ export default function LoginForm() {
     if (result.success) {
       tokenManager.setAccessToken(result.data?.access_token);
       setIsLoggedIn(true);
+      setIsAuthenticatorMfaSetup(result.data?.authenticator_mfa_setup);
 
-      if (!result.data?.mfa_setup) {
-        setIsMfaSetup(false);
-        navigate("/setup-mfa");
-      } else {
-        setIsMfaSetup(true);
-        navigate("/verify-mfa");
-      }
+      navigate("/mfa-selection");
     } else {
       if (result.status === 400 || result.status === 409) {
         setError(result.message || "Invalid credentials.");
-        throw error;
       } else {
         setError("Login failed. Please try again.");
-        throw error;
       }
     }
     setLoading(false);
@@ -102,5 +96,38 @@ export default function LoginForm() {
         {loading ? "Signing In..." : "Sign In"}
       </button>
     </form>
+  );
+}
+
+export default function Login() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" state={{ from: location }} replace />;
+  }
+
+  return (
+    <>
+      <AuthLayout
+        title="Welcome Back"
+        subtitle="Sign in to your work hours tracker"
+      >
+        <LoginForm />
+        <div className="auth-footer">
+          <p>
+            Don't have an account?{" "}
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => navigate("/register")}
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
+      </AuthLayout>
+    </>
   );
 }

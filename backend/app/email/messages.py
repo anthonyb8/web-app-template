@@ -24,3 +24,15 @@ class VerifyEmailMessage(HtmlMessage):
         )
         body = html_template.replace("{{VERIFICATION_URL}}", verification_url)
         self.msg = body
+
+
+class MfaEmailMessage(HtmlMessage):
+    def __init__(self, verification_code: str) -> None:
+        super().__init__()
+        html_template = load_email_template(
+            "app/email/templates/mfa_code.html"
+        )
+        body = html_template.replace(
+            "{{VERIFICATION_CODE}}", verification_code
+        )
+        self.msg = body
